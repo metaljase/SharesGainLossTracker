@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="DataTableExtensions.cs" />
+    <Compile Remove="EnumerableExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="log4net.config" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EPPlus" Version="5.4.0" />
+    <PackageReference Include="log4net" Version="2.0.11" />
+    <PackageReference Include="System.Net.Http.Json" Version="3.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="lib\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Metalhead.Extensions" Version="1.0.1">
+      <HintPath>lib\Metalhead.Extensions.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
