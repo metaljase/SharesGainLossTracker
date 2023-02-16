@@ -1,5 +1,5 @@
 # What is SharesGainLossTracker?
-SharesGainLossTracker is an app that creates a daily breakdown of percentage gains/losses for specified shares, typically shares of stocks you have purchased.  It can be run as a .NET console app or a .NET WFP app.
+SharesGainLossTracker is an app that creates a daily breakdown of percentage gains/losses for specified shares, typically shares of stocks you have purchased.  It can be run as a .NET console app or a .NET WPF app.
 
 # How does SharesGainLossTracker work?
 SharesGainLossTracker will create an Excel file containing a column for each stock specified, and a row for each day containing the gain/loss percentage.  
@@ -8,9 +8,9 @@ The gain/loss percentage is calculated by comparing the share purchase price, an
 
 Limitation: Only **one** share purchase price **per individual stock** can be tracked in an Excel output file.  As a workaround, multiple purchases of shares of the same stock can be split across separate CSV input files.
 
-SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack](https://marketstack.com/) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  API calls on free tiers are rate limited to a certain amount of calls per milliesecond/day.
+SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack](https://marketstack.com/) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  API calls are rate limited to a certain amount of calls per milliesecond/day.
 
-You will need to sign up to a free tier, which will give you a key to access their API.  This key needs to be inserted into the `appsettings` file.
+You will need to sign up to a free (or paid) tier, which will give you a key to access their API.  This key needs to be inserted into the `appsettings` file.
 
 # Setup instructions
 SharesGainLossTracker was initially written as a POC console app for my dad, therefore I haven't bothered creating any GitHub Actions, workflows, or binaries to download.  As a result, to run SharesGainLossTracker, you'll need to use Visual Studio 2022 (or a compatible alternative) to compile and run the app.
