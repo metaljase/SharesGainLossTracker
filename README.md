@@ -59,4 +59,4 @@ CARD.LON,Card Factory plc,140.19
 
 
 # Supporting other 3rd party stocks APIs
-Support can be added by writing additional classes that implement the `SharesGainLossTracker.Core.Models.IShare` interface.
+Support can be added by writing additional classes that implement the `SharesGainLossTracker.Core.Models.IStock` interface.
