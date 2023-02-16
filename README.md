@@ -6,7 +6,7 @@ SharesGainLossTracker will create an Excel file containing a column for each sto
 
 The gain/loss percentage is calculated by comparing the share purchase price, and the end-of-day adjusted closing price.  The shares you want to track, and the purchase price, should be specified in a CSV file.
 
-Limitation: Only one share purchase price **per stock** can be specified, therefore multiple purchases of shares of the same stock cannot be tracked.
+Limitation: Only **one** share purchase price **per individual stock** can be tracked in an Excel output file.  As a workaround, multiple purchases of shares of the same stock can be split across separate CSV input files.
 
 SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack](https://marketstack.com/) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  API calls on free tiers are rate limited to a certain amount of calls per milliesecond/day.
 
@@ -24,7 +24,7 @@ SharesGainLossTracker was initially written as a POC console app for my dad, the
 | Setting                      | Description   |
 | -----------------------------|:---------------
 | OpenOutputFileDirectory      | `true` or `false` sets whether or not the directory of the output file is opened upon creation.
-| Enabled                      | Set to `true` or `false` to enable/disable API calls and Excel file creation.
+| Enabled                      | Set to `true` or `false` to enable/disable API calls and thus Excel file creation.
 | Model                        | `Marketstack` for Marketstack API, or `AlphaVantage` for Alpha Vantage API.
 | OutputFilePath               | Path where Excel file is created.
 | OutputFilenamePrefix         | The Excel filename will be a date/time stamp. A prefix can be specified.
@@ -36,7 +36,8 @@ SharesGainLossTracker was initially written as a POC console app for my dad, the
 Below are example CSV files that should be referenced in `appsettings.json` against `SymbolsFullPath`.  Delimited values are: Stock symbol, Excel column name, Share purchase price.  Note: Stock symbols can differ between Marketstack and Alpha Vantage.
 
 Marketstack:
-```GOOGL,Alphabet Inc,89.50
+```
+GOOGL,Alphabet Inc,89.50
 AZN.XLON,Astra Zeneca plc,80.43
 BP.XLON,B.P. plc,200.95
 BAG.XLON,Barr (AG),537.65
@@ -44,7 +45,8 @@ CARD.XLON,Card Factory plc,140.19
 ```
 
 Alpha Vantage:
-```GOOGL,Alphabet Inc,89.50
+```
+GOOGL,Alphabet Inc,89.50
 AZN.LON,Astra Zeneca plc,80.43
 BP.LON,B.P. plc,200.95
 BAG.LON,Barr (AG),537.65
