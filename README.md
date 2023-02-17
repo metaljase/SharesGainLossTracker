@@ -8,7 +8,7 @@ The gain/loss percentage is calculated by comparing the share purchase price, an
 
 Limitation: Only **one** share purchase price **per individual stock** can be tracked in an Excel output file.  As a workaround, multiple purchases of shares of the same stock can be split across separate CSV input files.
 
-SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack](https://marketstack.com/) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  API calls are rate limited to a certain amount of calls per milliesecond/day.
+SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack.com](https://marketstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=metaljase) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  API calls are rate limited to a certain amount of calls per milliesecond/day.
 
 You will need to sign up to a free (or paid) tier, which will give you a key to access their API.  This key needs to be inserted into the `appsettings` file.
 
