@@ -32,6 +32,7 @@ namespace SharesGainLossTracker.WpfApp
                     .SetBasePath(Directory.GetCurrentDirectory())
                     .AddJsonFile("appsettings.json", false, true)
                     .AddJsonFile($"appsettings.{environmentName}.json", true, true)
+                    .AddUserSecrets(Assembly.GetExecutingAssembly(), true)
                     .AddEnvironmentVariables();
 
                 // WARNING: When overriding appsettings.json with environment settings, be careful with arrays.  Different
