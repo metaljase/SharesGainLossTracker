@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using log4net;
 using log4net.Config;
 using SharesGainLossTracker.Core;
+using System.Collections.Generic;
 
 namespace SharesGainLossTracker.ConsoleApp
 {
@@ -76,6 +77,7 @@ namespace SharesGainLossTracker.ConsoleApp
 
                 // Get stocks data for all groups and create an Excel workbook for each.
                 var shares = new Shares(Log);
+                List<string> outputFilePathOpened = new();
 
                 foreach (var shareGroup in settings.Groups.Where(g => g.Enabled))
                 {
@@ -83,12 +85,16 @@ namespace SharesGainLossTracker.ConsoleApp
                     var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
                     var excelFileFullPath = await Shares.CreateWorkbookAsync(shareGroup.Model, symbolsFullPath, shareGroup.ApiUrl, shareGroup.ApiDelayPerCallMilleseconds, shareGroup.OrderByDateDescending, outputFilePath, shareGroup.OutputFilenamePrefix);
 
-                    if (excelFileFullPath != null && settings.OpenOutputFileDirectory && Directory.Exists(outputFilePath))
+                    if (excelFileFullPath != null && settings.OpenOutputFileDirectory)
                     {
                         if (Directory.Exists(outputFilePath))
                         {
-                            ProcessStartInfo startInfo = new("explorer.exe", outputFilePath);
-                            Process.Start(startInfo);
+                            if (!outputFilePathOpened.Any(o => o.Equals(outputFilePath, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                outputFilePathOpened.Add(outputFilePath);
+                                ProcessStartInfo startInfo = new("explorer.exe", outputFilePath);
+                                Process.Start(startInfo);
+                            }
                         }
                         else
                         {

@@ -64,6 +64,7 @@ namespace SharesGainLossTracker.WpfApp
                 runButton.IsEnabled = false;
                 CreatedExcelFile = false;
                 logTextBlock.Text = string.Empty;
+                List<string> outputFilePathOpened = new();
 
                 // Get stocks data for all groups and create an Excel workbook for each.
                 Progress<ProgressLog> progressLog = new();
@@ -76,14 +77,21 @@ namespace SharesGainLossTracker.WpfApp
                     var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
                     var excelFileFullPath = await Shares.CreateWorkbookAsync(shareGroup.Model, symbolsFullPath, shareGroup.ApiUrl, shareGroup.ApiDelayPerCallMilleseconds, shareGroup.OrderByDateDescending, outputFilePath, shareGroup.OutputFilenamePrefix);
 
-                    if (excelFileFullPath != null && AppSettings.OpenOutputFileDirectory && Directory.Exists(outputFilePath))
+                    if (excelFileFullPath != null && AppSettings.OpenOutputFileDirectory)
                     {
-                        ProcessStartInfo startInfo = new("explorer.exe", outputFilePath);
-                        Process.Start(startInfo);
-                    }
-                    else
-                    {
-                        Log.ErrorFormat("Folder does not exist: {0}", outputFilePath);
+                        if (Directory.Exists(outputFilePath))
+                        {
+                            if (!outputFilePathOpened.Any(o => o.Equals(outputFilePath, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                outputFilePathOpened.Add(outputFilePath);
+                                ProcessStartInfo startInfo = new("explorer.exe", outputFilePath);
+                                Process.Start(startInfo);
+                            }
+                        }
+                        else
+                        {
+                            Log.ErrorFormat("Folder does not exist: {0}", outputFilePath);
+                        }
                     }
                 }
 
