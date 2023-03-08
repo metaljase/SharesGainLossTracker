@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 
 namespace SharesGainLossTracker.WpfApp
 {
@@ -14,6 +13,7 @@ namespace SharesGainLossTracker.WpfApp
         }
         
         public bool OpenOutputFileDirectory { get; set; }
+        public bool SuffixDateToOutputFilePath { get; set; }
         public List<SharesGroup> Groups { get; set; }
     }
 

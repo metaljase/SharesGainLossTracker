@@ -24,6 +24,7 @@ SharesGainLossTracker was initially written as a POC console app for my dad, the
 | Setting                      | Description   |
 | -----------------------------|:---------------
 | OpenOutputFileDirectory      | `true` or `false` sets whether or not the directory of the output file is opened upon creation.
+| SuffixDateToOutputFilePath   | `true` or `false` sets whether or not the date is suffixed to the `OutputFilePath`.
 | Enabled                      | Set to `true` or `false` to enable/disable API calls and thus Excel file creation.
 | Model                        | `Marketstack` for Marketstack API, or `AlphaVantage` for Alpha Vantage API.
 | OutputFilePath               | Path where Excel file is created.

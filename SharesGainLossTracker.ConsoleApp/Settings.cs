@@ -13,6 +13,7 @@ namespace SharesGainLossTracker.ConsoleApp
         }
 
         public bool OpenOutputFileDirectory { get; set; }
+        public bool SuffixDateToOutputFilePath { get; set; }
         public List<SharesGroup> Groups { get; set; }
     }
 
