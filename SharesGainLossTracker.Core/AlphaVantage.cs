@@ -72,7 +72,7 @@ namespace SharesGainLossTracker.Core
                 {
                     foreach (var data in stock.Data)
                     {
-                        flattenedStocks.Add(new FlattenedStock() { Symbol = stock.MetaData.Symbol, Date = DateTime.Parse(data.Key).ToString("yyyy-MM-dd"), AdjustedClose = Convert.ToDouble(data.Value.AdjustedClose) });
+                        flattenedStocks.Add(new FlattenedStock(DateTime.Parse(data.Key), stock.MetaData.Symbol, Convert.ToDouble(data.Value.AdjustedClose)));
                     }
                 }
             }

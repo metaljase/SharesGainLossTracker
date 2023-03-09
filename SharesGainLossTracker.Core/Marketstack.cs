@@ -68,7 +68,7 @@ namespace SharesGainLossTracker.Core
 
             if (stocks != null)
             {
-                flattenedStocks.AddRange(stocks.Where(s => s.Data != null).SelectMany(stock => stock.Data).Select(data => new FlattenedStock() { Symbol = data.Symbol, Date = DateTime.Parse(data.Date).ToString("yyyy-MM-dd"), AdjustedClose = data.AdjustedClose }));
+                flattenedStocks.AddRange(stocks.Where(s => s.Data != null).SelectMany(stock => stock.Data).Select(data => new FlattenedStock(DateTime.Parse(data.Date), data.Symbol, data.AdjustedClose)));
             }
 
             return flattenedStocks;
