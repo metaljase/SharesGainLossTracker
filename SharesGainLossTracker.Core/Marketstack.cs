@@ -24,6 +24,7 @@ namespace SharesGainLossTracker.Core
         async Task<List<FlattenedStock>> IStock.GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages, List<Share> sharesInput)
         {
             List<MarketstackRoot> stocks = new();
+            var hadDeserializingErrors = false;
 
             foreach (var item in httpResponseMessages)
             {
@@ -34,28 +35,45 @@ namespace SharesGainLossTracker.Core
                     {
                         stocks.Add(stock);
                     }
+                    else
+                    {
+                        hadDeserializingErrors = true;
+                    }
                 }
             }
 
-            var sharesWithData = sharesInput.Where(ss => stocks.Any(s => s.Data != null && s.Data.FirstOrDefault(d => d.Symbol.Equals(ss.Symbol, StringComparison.OrdinalIgnoreCase)) != null));
-            var sharesWithoutData = sharesInput.Where(ss => !sharesWithData.Contains(ss));
+            // Get a distinct list of stock symbols from the input, with the first associated stock name found (could be multiple).
+            List<Share> distinctStocks = sharesInput
+                .GroupBy(s => s.Symbol) // Group by the Symbol property
+                .Select(g => g.First()) // Select the first item of each group
+                .Select(s => new Share { Symbol = s.Symbol, StockName = s.StockName })
+                .ToList();
 
-            if (sharesWithData.Any())
+            var stocksWithData = distinctStocks.Where(ss => stocks.Any(s => s.Data != null && s.Data.FirstOrDefault(d => d.Symbol.Equals(ss.Symbol, StringComparison.OrdinalIgnoreCase)) != null));
+            var stocksWithoutData = distinctStocks.Where(ss => !stocksWithData.Contains(ss));
+
+            if (stocksWithData.Any())
             {
-                foreach (var symbols in sharesWithData)
+                foreach (var symbols in stocksWithData)
                 {
                     Log.InfoFormat("Successfully fetched stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
                     Progress.Report(new ProgressLog(MessageImportance.Good, string.Format("Successfully fetched stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName)));
                 }
             }
 
-            if (sharesWithoutData.Any())
+            if (stocksWithoutData.Any())
             {
-                foreach (var symbols in sharesWithoutData)
+                foreach (var symbols in stocksWithoutData)
                 {
                     Log.ErrorFormat("Failed fetching stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
                     Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Failed to fetch stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName)));
                 }
+            }
+
+            if (hadDeserializingErrors)
+            {
+                Log.ErrorFormat("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.");
+                Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.")));
             }
 
             await Task.Run(() => Task.Delay(1));

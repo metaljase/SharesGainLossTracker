@@ -75,13 +75,13 @@ namespace SharesGainLossTracker.WpfApp
                 {
                     var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
                     var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
-                    
+
                     if (AppSettings.SuffixDateToOutputFilePath)
                     {
                         outputFilePath = $"{outputFilePath}{DateTime.Now.Date:yyyy-MM-dd}";
                     }
 
-                    var excelFileFullPath = await Shares.CreateWorkbookAsync(shareGroup.Model, symbolsFullPath, shareGroup.ApiUrl, shareGroup.ApiDelayPerCallMilleseconds, shareGroup.OrderByDateDescending, outputFilePath, shareGroup.OutputFilenamePrefix);
+                    var excelFileFullPath = await Shares.CreateWorkbookAsync(shareGroup.Model, symbolsFullPath, shareGroup.ApiUrl, shareGroup.ApiDelayPerCallMilleseconds, shareGroup.OrderByDateDescending, outputFilePath, shareGroup.OutputFilenamePrefix, AppSettings.AppendPurchasePriceToStockNameColumn);
 
                     if (excelFileFullPath != null && AppSettings.OpenOutputFileDirectory)
                     {

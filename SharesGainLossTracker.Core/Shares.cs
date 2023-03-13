@@ -32,27 +32,13 @@ namespace SharesGainLossTracker.Core
             Progress = progress;
         }
 
-        public static async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, int apiDelayPerCallSeconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix)
+        public static async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, int apiDelayPerCallSeconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
         {
             var sharesInput = CreateSharesInputFromCsvFile(sharesInputFileFullPath);
 
-            // Append stock symbol to the end of the stock name if duplicate stock names exist.
-            var duplicateSymbolNames = sharesInput.Select(s => s.StockName).GroupBy(s => s).Where(g => g.Count() > 1).Select(s => s.Key);
-            var cleanedSharesInput = new List<Share>();
-            foreach (var shareInput in sharesInput)
-            {
-                if (duplicateSymbolNames.Any(d => d.Equals(shareInput.StockName, StringComparison.OrdinalIgnoreCase)))
-                {
-                    cleanedSharesInput.Add(new Share() { Symbol = shareInput.Symbol, StockName = $"{shareInput.StockName} ({shareInput.Symbol})", PurchasePrice = shareInput.PurchasePrice });
-                }
-                else
-                {
-                    cleanedSharesInput.Add(new Share() { Symbol = shareInput.Symbol, StockName = shareInput.StockName, PurchasePrice = shareInput.PurchasePrice });
-                }
-            }
+            var httpResponseMessages = await GetStocksDataAsync(stocksApiUrl, sharesInput, apiDelayPerCallSeconds);
 
-            var httpResponseMessages = await GetStocksDataAsync(stocksApiUrl, cleanedSharesInput, apiDelayPerCallSeconds);
-
+            // Map the data from the API using the appropriate model.
             IStock stocks = null;
             if (model.Equals("AlphaVantage", StringComparison.OrdinalIgnoreCase))
             {
@@ -63,36 +49,51 @@ namespace SharesGainLossTracker.Core
                 stocks = new Marketstack(Log, Progress);
             }
 
-            var flattenedStocks = await stocks.GetStocksDataAsync(httpResponseMessages, cleanedSharesInput);
+            var flattenedStocks = await stocks.GetStocksDataAsync(httpResponseMessages, sharesInput);
 
-            // Order data by date.
-            flattenedStocks = orderByDateDescending ? flattenedStocks.OrderByDescending(o => o.Date).ToList() : flattenedStocks.OrderBy(o => o.Date).ToList();
-
-            if (flattenedStocks.Count == 0)
+            if (flattenedStocks is null || flattenedStocks.Count == 0)
             {
                 Log.Error("Failed to fetch any stocks data, therefore unable to create Excel file.");
                 Progress.Report(new ProgressLog(MessageImportance.Bad, "Failed to fetch any stocks data, therefore unable to create Excel file.", false));
                 return null;
             }
 
-            // Calculate the share gain/loss percentage.
-            foreach (var flattenedStock in flattenedStocks)
+            // Append share purchase price to stock name, to avoid ambiguity in Excel file when multiple shares of the same stock exist.
+            if (appendPriceToStockName)
             {
-                var share = cleanedSharesInput.FirstOrDefault(s => s.Symbol.Equals(flattenedStock.Symbol, StringComparison.OrdinalIgnoreCase));
-                flattenedStock.GainLoss = Math.Round((flattenedStock.AdjustedClose - share.PurchasePrice) / share.PurchasePrice * 100, 1);
-            }
-
-            var pivotedDataTable = GetPivotedDataTable(flattenedStocks);
-
-            // Replace stock symbol with stock name on column headings.
-            for (var i = 1; i <= pivotedDataTable.Columns.Count - 1; i++)
-            {
-                var symbol = cleanedSharesInput.FirstOrDefault(s => s.Symbol.Equals(pivotedDataTable.Columns[i].ColumnName, StringComparison.OrdinalIgnoreCase)).StockName;
-                if (symbol != null)
+                foreach (var shareInput in sharesInput)
                 {
-                    pivotedDataTable.Columns[i].ColumnName = symbol;
+                    shareInput.StockName = $"{shareInput.StockName} {shareInput.PurchasePrice}";
                 }
             }
+
+            // Append sequential number to duplicate stock names to avoid ambiguity when pivoting data.
+            var duplicateSymbolNames = sharesInput.Select(s => s.StockName).GroupBy(s => s).Where(g => g.Count() > 1).Select(s => s.Key);
+
+            foreach (var duplicateStockName in duplicateSymbolNames)
+            {
+                var duplicateCount = 0;
+                foreach (var shareInput in sharesInput.Where(s => s.StockName.Equals(duplicateStockName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    shareInput.StockName = $"{shareInput.StockName} {duplicateCount += 1}";
+                }
+            }
+
+            List<ShareOutput> shareOutputs = new();
+            foreach (var flattenedStock in flattenedStocks)
+            {
+                // Get shares that match current stock symbol.  Multiple shares per stock may exist, e.g. with different purchase prices.
+                var sharesForSymbol = sharesInput.Where(s => s.Symbol.Equals(flattenedStock.Symbol, StringComparison.OrdinalIgnoreCase));
+                foreach (var shareForSymbol in sharesForSymbol)
+                {
+                    shareOutputs.Add(new ShareOutput(shareForSymbol.StockName, shareForSymbol.Symbol, shareForSymbol.PurchasePrice, flattenedStock.Date, flattenedStock.AdjustedClose));
+                }               
+            }
+
+            // Order data by date.
+            shareOutputs = orderByDateDescending ? shareOutputs.OrderByDescending(o => o.Date).ToList() : shareOutputs.OrderBy(o => o.Date).ToList();
+
+            var pivotedDataTable = GetPivotedDataTable(shareOutputs);
 
             return CreateWorkbook(pivotedDataTable, "Shares", outputFilePath, outputFilenamePrefix);
         }
@@ -122,10 +123,8 @@ namespace SharesGainLossTracker.Core
 
         public static List<Share> CreateSharesInputFromCsv(IEnumerable<string> delimitedSharesInput)
         {
-            // Split delimited shares input, trim whitespace, remove shares with duplicate symbols, and output to shares input object.
+            // Split delimited shares input, trim whitespace, and output to shares input object.
             var sharesInput = delimitedSharesInput.Select(item => item.Split(',').Select(a => a.Trim()).ToList())
-                .GroupBy(s => s[0])
-                .Select(s => s.First())
                 .Select(s => new Share() { Symbol = s[0], StockName = s[1], PurchasePrice = double.Parse(s[2]) })
                 .ToList();
 
@@ -146,10 +145,18 @@ namespace SharesGainLossTracker.Core
                 throw new ArgumentException("URL for stocks API is invalid.");
             }
 
+            // Get a distinct list of stock symbols, so data is only fetched once per stock when multiple shares of stocks exist.
+            List<string> distinctSymbols = sharesInput.Select(s => s.Symbol).Distinct().ToList();
+            Dictionary<string, string> symbolStockNames = new();
+            foreach (var distinctSymbol in distinctSymbols)
+            {
+                symbolStockNames.Add(distinctSymbol, sharesInput.FirstOrDefault(s => s.Symbol.Equals(distinctSymbol, StringComparison.OrdinalIgnoreCase)).StockName);
+            }
+
             List<Task<HttpResponseMessage>> tasks = new();
 
             // Use thread-safe collection.
-            var sharesInputFetchedSuccessfully = new ConcurrentBag<Share>();
+            var stocksSuccessfullyFetched = new ConcurrentBag<string>();
             var stocksData = new List<HttpResponseMessage>();
 
             Task<HttpResponseMessage[]> results = null;
@@ -159,12 +166,12 @@ namespace SharesGainLossTracker.Core
                 async () =>
                 {
                     tasks.Clear();
-                    foreach (var shareInput in sharesInput.Where(s => !sharesInputFetchedSuccessfully.Any(c => c.Symbol.Equals(s.Symbol, StringComparison.OrdinalIgnoreCase))))
+                    foreach (var symbolStockName in symbolStockNames.Where(s => !stocksSuccessfullyFetched.Any(c => c.Equals(s.Key, StringComparison.OrdinalIgnoreCase))))
                     {
-                        Log.Info($"Sending request for stocks data: {shareInput.Symbol} ({shareInput.StockName})");
-                        Progress.Report(new ProgressLog(MessageImportance.Normal, string.Format("Sending request for stocks data: {0} ({1})", shareInput.Symbol, shareInput.StockName)));
+                        Log.Info($"Sending request for stocks data: {symbolStockName.Key} ({symbolStockName.Value})");
+                        Progress.Report(new ProgressLog(MessageImportance.Normal, string.Format("Sending request for stocks data: {0} ({1})", symbolStockName.Key, symbolStockName.Value)));
 
-                        var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, string.Format(stocksApiUrl, shareInput.Symbol));
+                        var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, string.Format(stocksApiUrl, symbolStockName.Key));
                         var httpResponseMessageTask = Client.SendAsync(httpRequestMessage);
 
                         httpResponseMessageTask.GetAwaiter().OnCompleted(() =>
@@ -175,21 +182,21 @@ namespace SharesGainLossTracker.Core
 
                                 if (httpResponseMessage.IsSuccessStatusCode)
                                 {
-                                    sharesInputFetchedSuccessfully.Add(new Share() { Symbol = shareInput.Symbol, StockName = shareInput.StockName, PurchasePrice = shareInput.PurchasePrice });
-                                    
-                                    Log.Info($"Received successful response fetching stocks data: {shareInput.Symbol} ({shareInput.StockName})");
-                                    Progress.Report(new ProgressLog(MessageImportance.Good, string.Format("Received successful response fetching stocks data: {0} ({1})", shareInput.Symbol, shareInput.StockName)));
+                                    stocksSuccessfullyFetched.Add(symbolStockName.Key);
+
+                                    Log.Info($"Received successful response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})");
+                                    Progress.Report(new ProgressLog(MessageImportance.Good, string.Format("Received successful response fetching stocks data: {0} ({1})", symbolStockName.Key, symbolStockName.Value)));
                                 }
                                 else
                                 {
-                                    Log.Error($"Received failure response fetching stocks data: {shareInput.Symbol} ({shareInput.StockName})");
-                                    Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Received failure response fetching stocks data: {0} ({1})", shareInput.Symbol, shareInput.StockName)));
+                                    Log.Error($"Received failure response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})");
+                                    Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Received failure response fetching stocks data: {0} ({1})", symbolStockName.Key, symbolStockName.Value)));
                                 }
                             }
                             else
                             {
-                                Log.Error($"Failed to receive response fetching stocks data: {shareInput.Symbol}  ( {shareInput.StockName})", httpResponseMessageTask.Exception);
-                                Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Failed to receive response fetching stocks data: {0} ({1})", shareInput.Symbol, shareInput.StockName)));
+                                Log.Error($"Failed to receive response fetching stocks data: {symbolStockName.Key}  ( {symbolStockName.Value})", httpResponseMessageTask.Exception);
+                                Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Failed to receive response fetching stocks data: {0} ({1})", symbolStockName.Key, symbolStockName.Value)));
                             }
                         });
 
@@ -225,18 +232,17 @@ namespace SharesGainLossTracker.Core
             return stocksData.ToArray();
         }
 
-        public static DataTable GetPivotedDataTable(List<FlattenedStock> flattenedStocks)
+        public static DataTable GetPivotedDataTable(List<ShareOutput> sharesOutput)
         {
             DataTable pivotDataTable = new();
 
-            if (flattenedStocks.Count > 0)
+            if (sharesOutput.Count > 0)
             {
-                // Pivot flattened stocks so date rows are grouped.
-                // Should throw exception if the same stock has more than one 'close' value for the same date.
-                pivotDataTable = flattenedStocks.ToPivotedDataTable(
-                    item => item.Symbol,
+                // Pivot stocks so date rows are grouped.
+                pivotDataTable = sharesOutput.ToPivotedDataTable(
+                    item => item.StockName,
                     item => item.Date,
-                    items => items.Any() ? items.Single().GainLoss : 0);
+                    items => items.Any() ? items.Single().GainLoss : null);
             }
 
             return pivotDataTable;

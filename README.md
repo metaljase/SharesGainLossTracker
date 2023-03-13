@@ -6,8 +6,6 @@ SharesGainLossTracker will create an Excel file containing a column for each sto
 
 The gain/loss percentage is calculated by comparing the share purchase price, and the end-of-day adjusted closing price.  The shares you want to track, and the purchase price, should be specified in a CSV file.
 
-Limitation: Only **one** share purchase price **per individual stock** can be tracked in an Excel output file.  As a workaround, multiple purchases of shares of the same stock can be split across separate CSV input files.
-
 SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack.com](https://marketstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=metaljase) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  API calls are rate limited to a certain amount of calls per milliesecond/day.
 
 You will need to sign up to a free (or paid) tier, which will give you a key to access their API.  This key needs to be inserted into the `appsettings` file.
@@ -21,18 +19,19 @@ SharesGainLossTracker was initially written as a POC console app for my dad, the
 
 3) Open the `appsettings.json` file (or `appsettings.Development.json` if running in development mode) and edit the values:
 
-| Setting                      | Description   |
-| -----------------------------|:---------------
-| OpenOutputFileDirectory      | `true` or `false` sets whether or not the directory of the output file is opened upon creation.
-| SuffixDateToOutputFilePath   | `true` or `false` sets whether or not the date is suffixed to the `OutputFilePath`.
-| Enabled                      | Set to `true` or `false` to enable/disable API calls and thus Excel file creation.
-| Model                        | `Marketstack` for Marketstack API, or `AlphaVantage` for Alpha Vantage API.
-| OutputFilePath               | Path where Excel file is created.
-| OutputFilenamePrefix         | The Excel filename will be a date/time stamp. A prefix can be specified.
-| SymbolsFullPath              | Path and filename of the CSV file containing shares and purchase prices to be tracked.
-| ApiUrl                       | URL of 3rd party stocks API.  Replace `<API KEY>` with your API key.
-| ApiDelayPerCallMillieseconds | Delay between API calls to keep within rate limit. One API call per stock.
-| OrderByDateDescending        | `true` or `false` sets whether to sort dates in Excel file in ascending or discending order.
+| Setting                              | Description   |
+| -------------------------------------|:---------------
+| OpenOutputFileDirectory              | `true` or `false` sets whether or not the directory of the output file is opened upon creation.
+| SuffixDateToOutputFilePath           | `true` or `false` sets whether or not the date is suffixed to the `OutputFilePath`.
+| AppendPurchasePriceToStockNameColumn | `true` or `false` sets whether or not the purchase price is appended to the stock name column in the Excel file.
+| Enabled                              | Set to `true` or `false` to enable/disable API calls and thus Excel file creation.
+| Model                                | `Marketstack` for Marketstack API, or `AlphaVantage` for Alpha Vantage API.
+| OutputFilePath                       | Path where Excel file is created.
+| OutputFilenamePrefix                 | The Excel filename will be a date/time stamp. A prefix can be specified.
+| SymbolsFullPath                      | Path and filename of the CSV file containing shares and purchase prices to be tracked.
+| ApiUrl                               | URL of 3rd party stocks API.  Replace `<API KEY>` with your API key.
+| ApiDelayPerCallMillieseconds         | Delay between API calls to keep within rate limit. One API call per stock.
+| OrderByDateDescending                | `true` or `false` sets whether to sort dates in Excel file in ascending or discending order.
 
 Below are example CSV files that should be referenced in `appsettings.json` against `SymbolsFullPath`.  Delimited values are: Stock symbol, Excel column name, Share purchase price.  Note: Stock symbols can differ between Marketstack and Alpha Vantage.
 

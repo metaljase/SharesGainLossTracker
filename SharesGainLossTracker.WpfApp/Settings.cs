@@ -14,6 +14,7 @@ namespace SharesGainLossTracker.WpfApp
         
         public bool OpenOutputFileDirectory { get; set; }
         public bool SuffixDateToOutputFilePath { get; set; }
+        public bool AppendPurchasePriceToStockNameColumn { get; set; }
         public List<SharesGroup> Groups { get; set; }
     }
 
