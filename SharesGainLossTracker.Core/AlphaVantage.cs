@@ -76,7 +76,7 @@ namespace SharesGainLossTracker.Core
                 Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds settings.")));
             }
 
-            await Task.Run(() => Task.Delay(1));
+            await Task.Run(() => Task.CompletedTask);
             return GetFlattenedStocks(stocks);
         }
 
