@@ -8,6 +8,6 @@ namespace SharesGainLossTracker.Core
 {
     public interface IStock
     {
-        Task<List<FlattenedStock>> GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages, List<Share> sharesInput);
+        Task<List<FlattenedStock>> GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages);
     }
 }

@@ -49,7 +49,7 @@ namespace SharesGainLossTracker.Core
                 stocks = new Marketstack(Log, Progress);
             }
 
-            var flattenedStocks = await stocks.GetStocksDataAsync(httpResponseMessages, sharesInput);
+            var flattenedStocks = await stocks.GetStocksDataAsync(httpResponseMessages);
 
             // Validate data was returned from the API and mapped.
             try

@@ -21,7 +21,7 @@ namespace SharesGainLossTracker.Core
             this.Progress = progress;
         }
 
-        async Task<List<FlattenedStock>> IStock.GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages, List<Share> sharesInput)
+        async Task<List<FlattenedStock>> IStock.GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages)
         {
             List<MarketstackRoot> stocks = new();
             var hadDeserializingErrors = false;
@@ -30,7 +30,7 @@ namespace SharesGainLossTracker.Core
             {
                 if (item.IsSuccessStatusCode)
                 {
-                    var stock = item.Content.ReadFromJsonAsync<MarketstackRoot>().Result;
+                    var stock = await item.Content.ReadFromJsonAsync<MarketstackRoot>();
                     if (stock != null && stock.Data != null && stock.Data.Length > 0)
                     {
                         stocks.Add(stock);
@@ -48,7 +48,6 @@ namespace SharesGainLossTracker.Core
                 Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.")));
             }
 
-            await Task.Run(() => Task.CompletedTask);
             return GetFlattenedStocks(stocks);
         }
 
