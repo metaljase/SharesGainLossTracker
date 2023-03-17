@@ -42,34 +42,6 @@ namespace SharesGainLossTracker.Core
                 }
             }
 
-            // Get a distinct list of stock symbols from the input, with the first associated stock name found (could be multiple).
-            List<Share> distinctStocks = sharesInput
-                .GroupBy(s => s.Symbol) // Group by the Symbol property
-                .Select(g => g.First()) // Select the first item of each group
-                .Select(s => new Share { Symbol = s.Symbol, StockName = s.StockName })
-                .ToList();
-
-            var stocksWithData = distinctStocks.Where(ss => stocks.Any(s => s.Data != null && s.Data.FirstOrDefault(d => d.Symbol.Equals(ss.Symbol, StringComparison.OrdinalIgnoreCase)) != null));
-            var stocksWithoutData = distinctStocks.Where(ss => !stocksWithData.Contains(ss));
-
-            if (stocksWithData.Any())
-            {
-                foreach (var symbols in stocksWithData)
-                {
-                    Log.InfoFormat("Successfully fetched stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
-                    Progress.Report(new ProgressLog(MessageImportance.Good, string.Format("Successfully fetched stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName)));
-                }
-            }
-
-            if (stocksWithoutData.Any())
-            {
-                foreach (var symbols in stocksWithoutData)
-                {
-                    Log.ErrorFormat("Failed fetching stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
-                    Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Failed to fetch stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName)));
-                }
-            }
-
             if (hadDeserializingErrors)
             {
                 Log.ErrorFormat("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.");

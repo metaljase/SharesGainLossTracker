@@ -51,10 +51,21 @@ namespace SharesGainLossTracker.Core
 
             var flattenedStocks = await stocks.GetStocksDataAsync(httpResponseMessages, sharesInput);
 
-            if (flattenedStocks is null || flattenedStocks.Count == 0)
+            // Validate data was returned from the API and mapped.
+            try
             {
-                Log.Error("Failed to fetch any stocks data, therefore unable to create Excel file.");
-                Progress.Report(new ProgressLog(MessageImportance.Bad, "Failed to fetch any stocks data, therefore unable to create Excel file.", false));
+                ValidateFlattenedStocks(flattenedStocks, sharesInput);
+            }
+            catch (ArgumentNullException)
+            {
+                Log.Error($"Failed to fetch any stocks data for input file: {sharesInputFileFullPath})");
+                Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch any stocks data for input file: {sharesInputFileFullPath}", false));
+                return null;
+            }
+            catch (ArgumentException)
+            {
+                Log.Error($"Failed to fetch any stocks data for input file: {sharesInputFileFullPath})");
+                Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch any stocks data for input file: {sharesInputFileFullPath}", false));
                 return null;
             }
 
@@ -96,6 +107,47 @@ namespace SharesGainLossTracker.Core
             var pivotedDataTable = GetPivotedDataTable(shareOutputs);
 
             return CreateWorkbook(pivotedDataTable, "Shares", outputFilePath, outputFilenamePrefix);
+        }
+
+        private static void ValidateFlattenedStocks(List<FlattenedStock> flattenedStocks, List<Share> sharesInput)
+        {
+            if (flattenedStocks is null)
+            {
+                throw new ArgumentNullException(nameof(flattenedStocks), "Failed to fetch any stocks data.");
+            }
+            
+            if (flattenedStocks.Count == 0)
+            {
+                throw new ArgumentException("Failed to fetch any stocks data.", nameof(flattenedStocks));
+            }
+
+            // Get a distinct list of stock symbols from the input, with the first associated stock name found (could be multiple).
+            List<Share> distinctStocks = sharesInput
+                .GroupBy(s => s.Symbol) // Group by the Symbol property
+                .Select(g => g.First()) // Select the first item of each group
+                .Select(s => new Share { Symbol = s.Symbol, StockName = s.StockName })
+                .ToList();
+
+            var stocksWithData = distinctStocks.Where(ss => flattenedStocks.Any(s => s.Symbol.Equals(ss.Symbol, StringComparison.OrdinalIgnoreCase)));
+            var stocksWithoutData = distinctStocks.Where(ss => !stocksWithData.Contains(ss));
+
+            if (stocksWithData.Any())
+            {
+                foreach (var symbols in stocksWithData)
+                {
+                    Log.InfoFormat("Successfully fetched stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
+                    Progress.Report(new ProgressLog(MessageImportance.Good, string.Format("Successfully fetched stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName)));
+                }
+            }
+
+            if (stocksWithoutData.Any())
+            {
+                foreach (var symbols in stocksWithoutData)
+                {
+                    Log.ErrorFormat("Failed fetching stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
+                    Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Failed to fetch stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName)));
+                }
+            }
         }
 
         public static List<Share> CreateSharesInputFromCsvFile(string sharesInputFileFullPath)
@@ -260,6 +312,19 @@ namespace SharesGainLossTracker.Core
                 throw new InvalidOperationException("Cannot create Excel workbook because DataTable is invalid.");
             }
 
+            var fullPath = GetOutputFullPath(outputFilePath, outputFilenamePrefix);
+            worksheetName = string.IsNullOrWhiteSpace(worksheetName) ? "Shares" : worksheetName;
+
+            // Create Excel workbook from DataTable and save.
+            dataTable.ToExcelWorkbook(worksheetName, new FileInfo(fullPath));
+
+            Log.Info($"Successfully created: {fullPath}");
+            Progress.Report(new ProgressLog(MessageImportance.Good, $"Successfully created: {fullPath}", true));
+            return fullPath;
+        }
+
+        public static string GetOutputFullPath(string outputFilePath, string outputFilenamePrefix)
+        {
             // Validate outputFilePath.
             if (outputFilePath == null)
             {
@@ -285,16 +350,8 @@ namespace SharesGainLossTracker.Core
                 Path.GetFileNameWithoutExtension(outputFilenamePrefix),
                 DateTime.Now.ToString("yyyy-MM-dd HHmmss"),
                 Path.GetExtension(outputFilenamePrefix)).Trim();
-
-            // Create Excel workbook from DataTable and save.
-            var fullPath = Path.Combine(outputFilePath, outputFilenamePrefix);
-
-            worksheetName = string.IsNullOrWhiteSpace(worksheetName) ? "Shares" : worksheetName;
-            dataTable.ToExcelWorkbook(worksheetName, new FileInfo(fullPath));
-
-            Log.Info($"Successfully created: {fullPath}");
-            Progress.Report(new ProgressLog(MessageImportance.Good, $"Successfully created: {fullPath}", true));
-            return fullPath;
+            
+            return Path.Combine(outputFilePath, outputFilenamePrefix);
         }
     }
 }
