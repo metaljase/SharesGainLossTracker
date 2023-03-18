@@ -44,8 +44,8 @@ namespace SharesGainLossTracker.Core
 
             if (hadDeserializingErrors)
             {
-                Log.ErrorFormat("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.");
-                Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.")));
+                Log.Error("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.");
+                Progress.Report(new ProgressLog(MessageImportance.Bad, "Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting."));
             }
 
             return GetFlattenedStocks(stocks);

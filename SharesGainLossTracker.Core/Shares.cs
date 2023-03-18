@@ -116,7 +116,7 @@ namespace SharesGainLossTracker.Core
                 throw new ArgumentNullException(nameof(flattenedStocks), "Failed to fetch any stocks data.");
             }
             
-            if (flattenedStocks.Count == 0)
+            if (!flattenedStocks.Any())
             {
                 throw new ArgumentException("Failed to fetch any stocks data.", nameof(flattenedStocks));
             }
@@ -135,8 +135,8 @@ namespace SharesGainLossTracker.Core
             {
                 foreach (var symbols in stocksWithData)
                 {
-                    Log.InfoFormat("Successfully fetched stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
-                    Progress.Report(new ProgressLog(MessageImportance.Good, string.Format("Successfully fetched stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName)));
+                    Log.Info($"Successfully fetched stocks data for: {symbols.Symbol} ({symbols.StockName})");
+                    Progress.Report(new ProgressLog(MessageImportance.Good, $"Successfully fetched stocks data for: {symbols.Symbol} ({symbols.StockName})"));
                 }
             }
 
@@ -144,8 +144,8 @@ namespace SharesGainLossTracker.Core
             {
                 foreach (var symbols in stocksWithoutData)
                 {
-                    Log.ErrorFormat("Failed fetching stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
-                    Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Failed to fetch stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName)));
+                    Log.Error($"Failed fetching stocks data for: {symbols.Symbol} ({symbols.StockName})");
+                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch stocks data for: {symbols.Symbol} ({symbols.StockName})"));
                 }
             }
         }
@@ -180,7 +180,7 @@ namespace SharesGainLossTracker.Core
                 .Select(s => new Share() { Symbol = s[0], StockName = s[1], PurchasePrice = double.Parse(s[2]) })
                 .ToList();
 
-            if (sharesInput.Count == 0)
+            if (!sharesInput.Any())
             {
                 Log.Error("No correctly formatted shares input.");
                 throw new InvalidOperationException("No correctly formatted shares input.");
@@ -198,9 +198,8 @@ namespace SharesGainLossTracker.Core
             }
 
             // Get a distinct list of stock symbols, so data is only fetched once per stock when multiple shares of stocks exist.
-            List<string> distinctSymbols = sharesInput.Select(s => s.Symbol).Distinct().ToList();
             Dictionary<string, string> symbolStockNames = new();
-            foreach (var distinctSymbol in distinctSymbols)
+            foreach (var distinctSymbol in sharesInput.Select(s => s.Symbol).Distinct())
             {
                 symbolStockNames.Add(distinctSymbol, sharesInput.FirstOrDefault(s => s.Symbol.Equals(distinctSymbol, StringComparison.OrdinalIgnoreCase)).StockName);
             }
@@ -221,7 +220,7 @@ namespace SharesGainLossTracker.Core
                     foreach (var symbolStockName in symbolStockNames.Where(s => !stocksSuccessfullyFetched.Any(c => c.Equals(s.Key, StringComparison.OrdinalIgnoreCase))))
                     {
                         Log.Info($"Sending request for stocks data: {symbolStockName.Key} ({symbolStockName.Value})");
-                        Progress.Report(new ProgressLog(MessageImportance.Normal, string.Format("Sending request for stocks data: {0} ({1})", symbolStockName.Key, symbolStockName.Value)));
+                        Progress.Report(new ProgressLog(MessageImportance.Normal, $"Sending request for stocks data: {symbolStockName.Key} ({symbolStockName.Value})"));
 
                         var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, string.Format(stocksApiUrl, symbolStockName.Key));
                         var httpResponseMessageTask = Client.SendAsync(httpRequestMessage);
@@ -237,18 +236,18 @@ namespace SharesGainLossTracker.Core
                                     stocksSuccessfullyFetched.Add(symbolStockName.Key);
 
                                     Log.Info($"Received successful response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})");
-                                    Progress.Report(new ProgressLog(MessageImportance.Good, string.Format("Received successful response fetching stocks data: {0} ({1})", symbolStockName.Key, symbolStockName.Value)));
+                                    Progress.Report(new ProgressLog(MessageImportance.Good, $"Received successful response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})"));
                                 }
                                 else
                                 {
                                     Log.Error($"Received failure response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})");
-                                    Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Received failure response fetching stocks data: {0} ({1})", symbolStockName.Key, symbolStockName.Value)));
+                                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Received failure response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})"));
                                 }
                             }
                             else
                             {
                                 Log.Error($"Failed to receive response fetching stocks data: {symbolStockName.Key}  ( {symbolStockName.Value})", httpResponseMessageTask.Exception);
-                                Progress.Report(new ProgressLog(MessageImportance.Bad, string.Format("Failed to receive response fetching stocks data: {0} ({1})", symbolStockName.Key, symbolStockName.Value)));
+                                Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to receive response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})"));
                             }
                         });
 
@@ -303,7 +302,7 @@ namespace SharesGainLossTracker.Core
         public static string CreateWorkbook(DataTable dataTable, string worksheetName, string outputFilePath, string outputFilenamePrefix)
         {
             // Validate dataTable.
-            if (dataTable == null)
+            if (dataTable is null)
             {
                 throw new ArgumentNullException(nameof(dataTable), "DataTable cannot be null.");
             }
@@ -326,7 +325,7 @@ namespace SharesGainLossTracker.Core
         public static string GetOutputFullPath(string outputFilePath, string outputFilenamePrefix)
         {
             // Validate outputFilePath.
-            if (outputFilePath == null)
+            if (outputFilePath is null)
             {
                 throw new ArgumentNullException(nameof(outputFilePath), "Output file path for Excel workbook cannot be null.");
             }

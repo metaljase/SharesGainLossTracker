@@ -96,7 +96,7 @@ namespace SharesGainLossTracker.WpfApp
                         }
                         else
                         {
-                            Log.ErrorFormat("Folder does not exist: {0}", outputFilePath);
+                            Log.Error($"Folder does not exist: {outputFilePath}");
                         }
                     }
                 }

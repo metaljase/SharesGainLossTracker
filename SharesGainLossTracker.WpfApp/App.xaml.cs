@@ -42,17 +42,23 @@ namespace SharesGainLossTracker.WpfApp
                 var settings = config.GetSection("sharesSettings").Get<Settings>();
 
 
-                if (settings.Groups == null)
+                if (settings.Groups is null)
                 {
                     Log.Error("Groups array is missing from appsettings.json.");
                     MessageBox.Show("Groups array is missing from appsettings.json.", "SharesGainLossTracker", MessageBoxButton.OK);
                     throw new ArgumentNullException("Groups array is missing from appsettings.json.");
                 }
-                else if (settings.Groups.Count == 0)
+                else if (!settings.Groups.Any())
                 {
                     Log.Error("Groups array contains zero elements in appsettings.json.");
                     MessageBox.Show("Groups array contains zero elements in appsettings.json", "SharesGainLossTracker", MessageBoxButton.OK);
                     throw new ArgumentException("Groups array contains zero elements in appsettings.json.");
+                }
+                else if (!settings.Groups.Any(e => e.Enabled))
+                {
+                    Log.Error("No enabled elements in appsettings.json.");
+                    MessageBox.Show("No enabled elements in appsettings.json", "SharesGainLossTracker", MessageBoxButton.OK);
+                    throw new ArgumentException("No enabled elements in appsettings.json.");
                 }
 
                 foreach (var shareGroup in settings.Groups.Where(g => g.Enabled))
@@ -75,7 +81,7 @@ namespace SharesGainLossTracker.WpfApp
 
                     if (shareGroup.OutputFilenamePrefix.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
                     {
-                        Log.ErrorFormat($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' contains invalid characters.");
+                        Log.Error($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' contains invalid characters.");
                         MessageBox.Show($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' contains invalid characters.", "SharesGainLossTracker", MessageBoxButton.OK);
                         throw new ArgumentException($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' in appsettings.json contains invalid characters.");
                     }
