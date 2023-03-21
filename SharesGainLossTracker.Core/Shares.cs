@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -8,9 +7,10 @@ using System.Net.Http;
 using System.Threading.Tasks;
 
 using log4net;
-using SharesGainLossTracker.Core.Models;
 using Metalhead.Extensions;
-using Metalhead.Helpers;
+using SharesGainLossTracker.Core.Models;
+using Polly;
+using Polly.Retry;
 
 namespace SharesGainLossTracker.Core
 {
@@ -98,7 +98,7 @@ namespace SharesGainLossTracker.Core
                 foreach (var shareForSymbol in sharesForSymbol)
                 {
                     shareOutputs.Add(new ShareOutput(shareForSymbol.StockName, shareForSymbol.Symbol, shareForSymbol.PurchasePrice, flattenedStock.Date, flattenedStock.AdjustedClose));
-                }               
+                }
             }
 
             // Order data by date.
@@ -107,47 +107,6 @@ namespace SharesGainLossTracker.Core
             var pivotedDataTable = GetPivotedDataTable(shareOutputs);
 
             return CreateWorkbook(pivotedDataTable, "Shares", outputFilePath, outputFilenamePrefix);
-        }
-
-        private static void ValidateFlattenedStocks(List<FlattenedStock> flattenedStocks, List<Share> sharesInput)
-        {
-            if (flattenedStocks is null)
-            {
-                throw new ArgumentNullException(nameof(flattenedStocks), "Failed to fetch any stocks data.");
-            }
-            
-            if (!flattenedStocks.Any())
-            {
-                throw new ArgumentException("Failed to fetch any stocks data.", nameof(flattenedStocks));
-            }
-
-            // Get a distinct list of stock symbols from the input, with the first associated stock name found (could be multiple).
-            List<Share> distinctStocks = sharesInput
-                .GroupBy(s => s.Symbol) // Group by the Symbol property
-                .Select(g => g.First()) // Select the first item of each group
-                .Select(s => new Share { Symbol = s.Symbol, StockName = s.StockName })
-                .ToList();
-
-            var stocksWithData = distinctStocks.Where(ss => flattenedStocks.Any(s => s.Symbol.Equals(ss.Symbol, StringComparison.OrdinalIgnoreCase)));
-            var stocksWithoutData = distinctStocks.Where(ss => !stocksWithData.Contains(ss));
-
-            if (stocksWithData.Any())
-            {
-                foreach (var symbols in stocksWithData)
-                {
-                    Log.Info($"Successfully fetched stocks data for: {symbols.Symbol} ({symbols.StockName})");
-                    Progress.Report(new ProgressLog(MessageImportance.Good, $"Successfully fetched stocks data for: {symbols.Symbol} ({symbols.StockName})"));
-                }
-            }
-
-            if (stocksWithoutData.Any())
-            {
-                foreach (var symbols in stocksWithoutData)
-                {
-                    Log.Error($"Failed fetching stocks data for: {symbols.Symbol} ({symbols.StockName})");
-                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch stocks data for: {symbols.Symbol} ({symbols.StockName})"));
-                }
-            }
         }
 
         public static List<Share> CreateSharesInputFromCsvFile(string sharesInputFileFullPath)
@@ -195,92 +154,143 @@ namespace SharesGainLossTracker.Core
             {
                 Log.Error("URL for stocks API is invalid.");
                 throw new ArgumentException("URL for stocks API is invalid.");
-            }
+            }            
 
-            // Get a distinct list of stock symbols, so data is only fetched once per stock when multiple shares of stocks exist.
+            // Get a distinct list of stock symbols, so data is only fetched once per stock when multiple shares of the same stock exist.
             Dictionary<string, string> symbolStockNames = new();
             foreach (var distinctSymbol in sharesInput.Select(s => s.Symbol).Distinct())
             {
                 symbolStockNames.Add(distinctSymbol, sharesInput.FirstOrDefault(s => s.Symbol.Equals(distinctSymbol, StringComparison.OrdinalIgnoreCase)).StockName);
             }
 
-            List<Task<HttpResponseMessage>> tasks = new();
+            var policy = GetRetryPolicy(apiDelayPerCallMilleseconds);
 
-            // Use thread-safe collection.
-            var stocksSuccessfullyFetched = new ConcurrentBag<string>();
-            var stocksData = new List<HttpResponseMessage>();
-
-            Task<HttpResponseMessage[]> results = null;
-
-            await Helper.ExponentialRetryAsync(
-                5,
-                async () =>
+            List<HttpResponseMessage> httpResponseMessages = new();
+            try
+            {
+                foreach (var stockSymbolName in symbolStockNames)
                 {
-                    tasks.Clear();
-                    foreach (var symbolStockName in symbolStockNames.Where(s => !stocksSuccessfullyFetched.Any(c => c.Equals(s.Key, StringComparison.OrdinalIgnoreCase))))
+                    // Fetch stock data using a Polly policy to trigger a retry if an HttpRequestException is thrown.
+                    httpResponseMessages.Add(await policy.ExecuteAsync(async () =>
                     {
-                        Log.Info($"Sending request for stocks data: {symbolStockName.Key} ({symbolStockName.Value})");
-                        Progress.Report(new ProgressLog(MessageImportance.Normal, $"Sending request for stocks data: {symbolStockName.Key} ({symbolStockName.Value})"));
-
-                        var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, string.Format(stocksApiUrl, symbolStockName.Key));
-                        var httpResponseMessageTask = Client.SendAsync(httpRequestMessage);
-
-                        httpResponseMessageTask.GetAwaiter().OnCompleted(() =>
-                        {
-                            if (httpResponseMessageTask.IsCompletedSuccessfully)
-                            {
-                                var httpResponseMessage = httpResponseMessageTask.Result;
-
-                                if (httpResponseMessage.IsSuccessStatusCode)
-                                {
-                                    stocksSuccessfullyFetched.Add(symbolStockName.Key);
-
-                                    Log.Info($"Received successful response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})");
-                                    Progress.Report(new ProgressLog(MessageImportance.Good, $"Received successful response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})"));
-                                }
-                                else
-                                {
-                                    Log.Error($"Received failure response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})");
-                                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Received failure response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})"));
-                                }
-                            }
-                            else
-                            {
-                                Log.Error($"Failed to receive response fetching stocks data: {symbolStockName.Key}  ( {symbolStockName.Value})", httpResponseMessageTask.Exception);
-                                Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to receive response fetching stocks data: {symbolStockName.Key} ({symbolStockName.Value})"));
-                            }
-                        });
-
-                        tasks.Add(httpResponseMessageTask);
-                        await Task.Delay(new TimeSpan(0, 0, 0, 0, apiDelayPerCallMilleseconds)).ConfigureAwait(false);
-                    }
-
-                    results = Task.WhenAll(tasks);
-
-                    try
-                    {
-                        // Will throw an exception if any tasks failed (triggering retry), but any successful tasks will be extracted in 'finally' block.
-                        await results.ConfigureAwait(false);
-                    }
-                    finally
-                    {
-                        stocksData.AddRange(tasks.Where(t => t.IsCompletedSuccessfully).Select(h => h.Result).Where(h => h.IsSuccessStatusCode).ToArray());
-                    }
-                },
-                ex => ex is HttpRequestException || ex is TaskCanceledException,
-                retryDelay =>
+                        return await GetStocksDataAsync(stocksApiUrl, apiDelayPerCallMilleseconds, stockSymbolName.Key, stockSymbolName.Value);
+                    }));
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex is HttpRequestException or TaskCanceledException)
                 {
-                    return retryDelay switch
-                    {
-                        1 => Math.Max(0, apiDelayPerCallMilleseconds),
-                        2 => Math.Max(1000, apiDelayPerCallMilleseconds),
-                        3 => Math.Max(5000, apiDelayPerCallMilleseconds),
-                        4 => Math.Max(10000, apiDelayPerCallMilleseconds),
-                        _ => Math.Max(30000, apiDelayPerCallMilleseconds)
-                    };
-                }).ConfigureAwait(false);
+                    // Swallow final HttpRequestException or TaskCanceledException so any successfully fetched stocks data can be processed.
+                    Log.Error($"Exception fetching stocks data.  Reached maximum retries.", ex);
+                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Error fetching stocks data.  Reached maximum retries."));
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
-            return stocksData.ToArray();
+            return httpResponseMessages.ToArray();
+        }
+
+        private static AsyncRetryPolicy GetRetryPolicy(int apiDelayPerCallMilleseconds)
+        {
+            return Policy
+                .HandleInner<HttpRequestException>()
+                .OrInner<TaskCanceledException>()
+                .WaitAndRetryAsync(new[]
+                {
+                    TimeSpan.FromMilliseconds(Math.Max(0, apiDelayPerCallMilleseconds)),
+                    TimeSpan.FromMilliseconds(Math.Max(1000, apiDelayPerCallMilleseconds)),
+                    TimeSpan.FromMilliseconds(Math.Max(5000, apiDelayPerCallMilleseconds)),
+                    TimeSpan.FromMilliseconds(Math.Max(10000, apiDelayPerCallMilleseconds)),
+                    TimeSpan.FromMilliseconds(Math.Max(30000, apiDelayPerCallMilleseconds))
+                }, (exception, timeSpan) =>
+                {
+                    Log.Error($"Exception fetching stocks data.  Retrying in {timeSpan.TotalMilliseconds} milliseconds.", exception);
+                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Error fetching stocks data.  Retrying in {timeSpan.TotalMilliseconds} milliseconds."));
+                });
+        }
+
+        private static async Task<HttpResponseMessage> GetStocksDataAsync(string stocksApiUrl, int apiDelayPerCallMilleseconds, string stockSymbol, string stockName)
+        {
+            Log.Info($"Sending request for stocks data: {stockSymbol} ({stockName})");
+            Progress.Report(new ProgressLog(MessageImportance.Normal, $"Sending request for stocks data: {stockSymbol} ({stockName})"));
+
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, string.Format(stocksApiUrl, stockSymbol));
+
+            var result = await Client.SendAsync(httpRequestMessage).ContinueWith((task) =>
+            {
+                HttpResponseMessage response = task.Result;
+
+                if (task.IsCompletedSuccessfully)
+                {
+                    if (response.IsSuccessStatusCode)
+                    {
+                        Log.Info($"Received successful response fetching stocks data: {stockSymbol} ({stockName})");
+                        Progress.Report(new ProgressLog(MessageImportance.Good, $"Received successful response fetching stocks data: {stockSymbol} ({stockName})"));
+                    }
+                    else
+                    {
+                        Log.Error($"Received failure response fetching stocks data: {stockSymbol} ({stockName})");
+                        Progress.Report(new ProgressLog(MessageImportance.Bad, $"Received failure response fetching stocks data: {stockSymbol} ({stockName})"));
+                    }
+                }
+                else
+                {
+                    Log.Error($"Failed to receive response fetching stocks data: {stockSymbol} ({stockName})", task.Exception);
+                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to receive response fetching stocks data: {stockSymbol} ({stockName})"));
+                }
+
+                return response;
+            });
+
+            // Pause before the next API call to avoid hitting the rate limit.
+            await Task.Delay(new TimeSpan(0, 0, 0, 0, apiDelayPerCallMilleseconds));
+
+            return result;
+        }
+
+        private static void ValidateFlattenedStocks(List<FlattenedStock> flattenedStocks, List<Share> sharesInput)
+        {
+            if (flattenedStocks is null)
+            {
+                throw new ArgumentNullException(nameof(flattenedStocks), "Failed to fetch any stocks data.");
+            }
+
+            if (!flattenedStocks.Any())
+            {
+                throw new ArgumentException("Failed to fetch any stocks data.", nameof(flattenedStocks));
+            }
+
+            // Get a distinct list of stock symbols from the input, with the first associated stock name found (could be multiple).
+            List<Share> distinctStocks = sharesInput
+                .GroupBy(s => s.Symbol) // Group by the Symbol property
+                .Select(g => g.First()) // Select the first item of each group
+                .Select(s => new Share { Symbol = s.Symbol, StockName = s.StockName })
+                .ToList();
+
+            var stocksWithData = distinctStocks.Where(ss => flattenedStocks.Any(s => s.Symbol.Equals(ss.Symbol, StringComparison.OrdinalIgnoreCase)));
+            var stocksWithoutData = distinctStocks.Where(ss => !stocksWithData.Contains(ss));
+
+            if (stocksWithData.Any())
+            {
+                foreach (var symbols in stocksWithData)
+                {
+                    Log.Info($"Successfully fetched stocks data for: {symbols.Symbol} ({symbols.StockName})");
+                    Progress.Report(new ProgressLog(MessageImportance.Good, $"Successfully fetched stocks data for: {symbols.Symbol} ({symbols.StockName})"));
+                }
+            }
+
+            if (stocksWithoutData.Any())
+            {
+                foreach (var symbols in stocksWithoutData)
+                {
+                    Log.Error($"Failed fetching stocks data for: {symbols.Symbol} ({symbols.StockName})");
+                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch stocks data for: {symbols.Symbol} ({symbols.StockName})"));
+                }
+            }
         }
 
         public static DataTable GetPivotedDataTable(List<ShareOutput> sharesOutput)
