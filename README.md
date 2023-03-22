@@ -1,10 +1,10 @@
 # What is SharesGainLossTracker?
-SharesGainLossTracker is an app that creates a daily breakdown of percentage gains/losses for specified shares, typically shares of stocks you have purchased.  It can be run as a .NET console app or a .NET WPF app.
+SharesGainLossTracker is an app that creates a daily breakdown of percentage gains/losses and adjusted close prices for specified shares, typically shares of stocks you have purchased.  It can be run as a .NET console app or a .NET WPF app.
 
 # How does SharesGainLossTracker work?
-SharesGainLossTracker will create an Excel file containing a column for each stock specified, and a row for each day containing the gain/loss percentage.  
+SharesGainLossTracker will create an Excel Workbook file containing two Worksheets.  Both Worksheets will have a column for each stock specified.  One Worksheet will contain the gain/loss percentage and the other will contain the adjusted close price for each day.
 
-The gain/loss percentage is calculated by comparing the share purchase price, and the end-of-day adjusted closing price.  The shares you want to track, and the purchase price, should be specified in a CSV file.
+The gain/loss percentage is calculated by comparing the share purchase price, and the end-of-day adjusted close price.  The shares you want to track, and the purchase price, should be specified in a CSV file.  Share you want to track can be split-up into different groups resulting in a seperate Excel Workbook for each group.
 
 SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack.com](https://marketstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=metaljase) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  API calls are rate limited to a certain amount of calls per milliesecond/day.
 

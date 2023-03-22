@@ -104,9 +104,15 @@ namespace SharesGainLossTracker.Core
             // Order data by date.
             shareOutputs = orderByDateDescending ? shareOutputs.OrderByDescending(o => o.Date).ToList() : shareOutputs.OrderBy(o => o.Date).ToList();
 
-            var pivotedDataTable = GetPivotedDataTable(shareOutputs);
+            // Get a DataTable containing the gain/loss, and a DataTable containing the adjusted close price.
+            List<DataTable> dataTables = new()
+            {
+                GetGainLossPivotedDataTable(shareOutputs, "Gain/Loss"),
+                GetAdjustedClosePivotedDataTable(shareOutputs, "Adjusted Close")
+            };
 
-            return CreateWorkbook(pivotedDataTable, "Shares", outputFilePath, outputFilenamePrefix);
+            // Create an Excel Workbook from the DataTables.
+            return CreateWorkbook(dataTables, outputFilePath, outputFilenamePrefix);
         }
 
         public static List<Share> CreateSharesInputFromCsvFile(string sharesInputFileFullPath)
@@ -293,7 +299,7 @@ namespace SharesGainLossTracker.Core
             }
         }
 
-        public static DataTable GetPivotedDataTable(List<ShareOutput> sharesOutput)
+        public static DataTable GetGainLossPivotedDataTable(List<ShareOutput> sharesOutput, string dataTableName)
         {
             DataTable pivotDataTable = new();
 
@@ -306,26 +312,43 @@ namespace SharesGainLossTracker.Core
                     items => items.Any() ? items.Single().GainLoss : null);
             }
 
+            pivotDataTable.TableName = dataTableName;
             return pivotDataTable;
         }
 
-        public static string CreateWorkbook(DataTable dataTable, string worksheetName, string outputFilePath, string outputFilenamePrefix)
+        public static DataTable GetAdjustedClosePivotedDataTable(List<ShareOutput> sharesOutput, string dataTableName)
+        {
+            DataTable pivotDataTable = new();
+
+            if (sharesOutput.Count > 0)
+            {
+                // Pivot stocks so date rows are grouped.
+                pivotDataTable = sharesOutput.ToPivotedDataTable(
+                    item => item.StockName,
+                    item => item.Date,
+                    items => items.Any() ? items.Single().AdjustedClose : null);
+            }
+
+            pivotDataTable.TableName = dataTableName;
+            return pivotDataTable;
+        }
+
+        public static string CreateWorkbook(List<DataTable> dataTables, string outputFilePath, string outputFilenamePrefix)
         {
             // Validate dataTable.
-            if (dataTable is null)
+            if (dataTables is null)
             {
-                throw new ArgumentNullException(nameof(dataTable), "DataTable cannot be null.");
+                throw new ArgumentNullException(nameof(dataTables), "DataTable cannot be null.");
             }
-            else if (dataTable.Rows.Count == 0)
+            else if (dataTables.Any(dt => dt.Rows.Count == 0))
             {
                 throw new InvalidOperationException("Cannot create Excel workbook because DataTable is invalid.");
             }
 
             var fullPath = GetOutputFullPath(outputFilePath, outputFilenamePrefix);
-            worksheetName = string.IsNullOrWhiteSpace(worksheetName) ? "Shares" : worksheetName;
 
-            // Create Excel workbook from DataTable and save.
-            dataTable.ToExcelWorkbook(worksheetName, new FileInfo(fullPath));
+            // Create Excel workbook from List<DataTable> and save.
+            dataTables.ToExcelWorkbook("Shares", new FileInfo(fullPath));
 
             Log.Info($"Successfully created: {fullPath}");
             Progress.Report(new ProgressLog(MessageImportance.Good, $"Successfully created: {fullPath}", true));

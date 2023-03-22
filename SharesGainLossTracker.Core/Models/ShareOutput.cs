@@ -8,7 +8,7 @@ namespace SharesGainLossTracker.Core.Models
         public string Symbol { get; set; }
         public double PurchasePrice { get; set; }
         public string Date { get; set; }
-        public double AdjustedClose { get; set; }
+        public double? AdjustedClose { get; set; }
         public double? GainLoss { get; }
 
 
