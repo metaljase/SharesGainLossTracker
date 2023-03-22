@@ -4,6 +4,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 using log4net;
@@ -34,6 +35,9 @@ namespace Metalhead.SharesGainLossTracker.Core
 
         public static async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, int apiDelayPerCallSeconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
         {
+            Log.Info($"Processing input file: {sharesInputFileFullPath}");
+            Progress.Report(new ProgressLog(MessageImportance.Normal, $"Processing input file: {sharesInputFileFullPath}"));
+
             var sharesInput = CreateSharesInputFromCsvFile(sharesInputFileFullPath);
 
             var httpResponseMessages = await GetStocksDataAsync(stocksApiUrl, sharesInput, apiDelayPerCallSeconds);
