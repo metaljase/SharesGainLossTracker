@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SharesGainLossTracker.Core\SharesGainLossTracker.Core.csproj" />
+    <ProjectReference Include="..\Metalhead.SharesGainLossTracker.Core\Metalhead.SharesGainLossTracker.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

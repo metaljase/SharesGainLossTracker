@@ -1,4 +1,4 @@
-﻿namespace SharesGainLossTracker.Core.Models
+﻿namespace Metalhead.SharesGainLossTracker.Core.Models
 {
     public enum MessageImportance
     {

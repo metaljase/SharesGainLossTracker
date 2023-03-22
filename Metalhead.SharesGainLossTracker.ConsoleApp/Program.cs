@@ -8,10 +8,10 @@ using Microsoft.Extensions.Configuration;
 
 using log4net;
 using log4net.Config;
-using SharesGainLossTracker.Core;
+using Metalhead.SharesGainLossTracker.Core;
 using System.Collections.Generic;
 
-namespace SharesGainLossTracker.ConsoleApp
+namespace Metalhead.SharesGainLossTracker.ConsoleApp
 {
     public class Program
     {

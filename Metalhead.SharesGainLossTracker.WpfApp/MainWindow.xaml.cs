@@ -15,10 +15,10 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 using log4net;
-using SharesGainLossTracker.Core;
-using SharesGainLossTracker.Core.Models;
+using Metalhead.SharesGainLossTracker.Core;
+using Metalhead.SharesGainLossTracker.Core.Models;
 
-namespace SharesGainLossTracker.WpfApp
+namespace Metalhead.SharesGainLossTracker.WpfApp
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

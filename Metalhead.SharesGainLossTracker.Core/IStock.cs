@@ -2,9 +2,9 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 
-using SharesGainLossTracker.Core.Models;
+using Metalhead.SharesGainLossTracker.Core.Models;
 
-namespace SharesGainLossTracker.Core
+namespace Metalhead.SharesGainLossTracker.Core
 {
     public interface IStock
     {

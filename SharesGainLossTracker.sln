@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharesGainLossTracker.ConsoleApp", "SharesGainLossTracker.ConsoleApp\SharesGainLossTracker.ConsoleApp.csproj", "{52BB2DEF-D143-455A-A4C5-D3FE53483691}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Metalhead.SharesGainLossTracker.ConsoleApp", "Metalhead.SharesGainLossTracker.ConsoleApp\Metalhead.SharesGainLossTracker.ConsoleApp.csproj", "{52BB2DEF-D143-455A-A4C5-D3FE53483691}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharesGainLossTracker.Core", "SharesGainLossTracker.Core\SharesGainLossTracker.Core.csproj", "{1FDA7878-112D-465A-842F-FDE4A995EB57}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Metalhead.SharesGainLossTracker.Core", "Metalhead.SharesGainLossTracker.Core\Metalhead.SharesGainLossTracker.Core.csproj", "{1FDA7878-112D-465A-842F-FDE4A995EB57}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SharesGainLossTracker.WpfApp", "SharesGainLossTracker.WpfApp\SharesGainLossTracker.WpfApp.csproj", "{7EB7F06F-4FA3-4896-826E-3DF8ADD7CEA3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Metalhead.SharesGainLossTracker.WpfApp", "Metalhead.SharesGainLossTracker.WpfApp\Metalhead.SharesGainLossTracker.WpfApp.csproj", "{7EB7F06F-4FA3-4896-826E-3DF8ADD7CEA3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

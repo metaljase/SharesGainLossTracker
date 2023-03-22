@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SharesGainLossTracker.ConsoleApp
+namespace Metalhead.SharesGainLossTracker.WpfApp
 {
     public class Settings
     {
@@ -11,7 +11,7 @@ namespace SharesGainLossTracker.ConsoleApp
         {
             Current = this;
         }
-
+        
         public bool OpenOutputFileDirectory { get; set; }
         public bool SuffixDateToOutputFilePath { get; set; }
         public bool AppendPurchasePriceToStockNameColumn { get; set; }

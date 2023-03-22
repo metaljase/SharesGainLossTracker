@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 using log4net;
 using Metalhead.Extensions;
-using SharesGainLossTracker.Core.Models;
+using Metalhead.SharesGainLossTracker.Core.Models;
 using Polly;
 using Polly.Retry;
 
-namespace SharesGainLossTracker.Core
+namespace Metalhead.SharesGainLossTracker.Core
 {
     public class Shares
     {

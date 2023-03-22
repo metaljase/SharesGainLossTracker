@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SharesGainLossTracker.Core.Models
+namespace Metalhead.SharesGainLossTracker.Core.Models
 {
     public class FlattenedStock
     {

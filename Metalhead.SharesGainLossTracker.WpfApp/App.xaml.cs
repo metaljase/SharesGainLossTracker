@@ -8,7 +8,7 @@ using System.Windows;
 using log4net;
 using log4net.Config;
 
-namespace SharesGainLossTracker.WpfApp
+namespace Metalhead.SharesGainLossTracker.WpfApp
 {
     /// <summary>
     /// Interaction logic for App.xaml
