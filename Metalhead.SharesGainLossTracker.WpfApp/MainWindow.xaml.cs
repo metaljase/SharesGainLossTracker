@@ -81,7 +81,15 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                         outputFilePath = $"{outputFilePath}{DateTime.Now.Date:yyyy-MM-dd}";
                     }
 
-                    var excelFileFullPath = await Shares.CreateWorkbookAsync(shareGroup.Model, symbolsFullPath, shareGroup.ApiUrl, shareGroup.ApiDelayPerCallMilleseconds, shareGroup.OrderByDateDescending, outputFilePath, shareGroup.OutputFilenamePrefix, AppSettings.AppendPurchasePriceToStockNameColumn);
+                    var excelFileFullPath = await Shares.CreateWorkbookAsync(
+                        shareGroup.Model,
+                        symbolsFullPath,
+                        shareGroup.ApiUrl,
+                        shareGroup.ApiDelayPerCallMilleseconds,
+                        shareGroup.OrderByDateDescending,
+                        outputFilePath,
+                        shareGroup.OutputFilenamePrefix,
+                        AppSettings.AppendPurchasePriceToStockNameColumn);
 
                     if (excelFileFullPath != null && AppSettings.OpenOutputFileDirectory)
                     {
@@ -107,7 +115,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
             }
             catch (Exception ex)
             {
-                Log.Error(ex);
+                Log.Fatal(ex);
             }
         }      
 

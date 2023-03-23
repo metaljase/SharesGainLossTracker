@@ -62,20 +62,20 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                     var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
                     if (!string.IsNullOrWhiteSpace(shareGroup.SymbolsFullPath) && !File.Exists(symbolsFullPath))
                     {
-                        Log.Error($"Shares input file (in appsettings.json) not found: {symbolsFullPath}");
+                        Log.ErrorFormat("Shares input file (in appsettings.json) not found: {0}", symbolsFullPath);
                         throw new FileNotFoundException($"Shares input file (in appsettings.json) not found.", symbolsFullPath);
                     }
 
                     var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
                     if (outputFilePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
                     {
-                        Log.Error($"Output file path '{shareGroup.OutputFilePath}' in appsettings.json contains invalid characters.");
+                        Log.ErrorFormat("Output file path '{0}' in appsettings.json contains invalid characters.", shareGroup.OutputFilePath);
                         throw new ArgumentException($"Output file path '{shareGroup.OutputFilePath}' in appsettings.json contains invalid characters.");
                     }
 
                     if (shareGroup.OutputFilenamePrefix.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
                     {
-                        Log.Error($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' contains invalid characters.");
+                        Log.ErrorFormat("Output filename prefix '{0}' contains invalid characters.", shareGroup.OutputFilenamePrefix);
                         throw new ArgumentException($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' in appsettings.json contains invalid characters.");
                     }
                 }
@@ -94,7 +94,15 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                         outputFilePath = $"{outputFilePath}{DateTime.Now.Date:yyyy-MM-dd}";
                     }
 
-                    var excelFileFullPath = await Shares.CreateWorkbookAsync(shareGroup.Model, symbolsFullPath, shareGroup.ApiUrl, shareGroup.ApiDelayPerCallMilleseconds, shareGroup.OrderByDateDescending, outputFilePath, shareGroup.OutputFilenamePrefix, settings.AppendPurchasePriceToStockNameColumn);
+                    var excelFileFullPath = await Shares.CreateWorkbookAsync(
+                        shareGroup.Model,
+                        symbolsFullPath,
+                        shareGroup.ApiUrl,
+                        shareGroup.ApiDelayPerCallMilleseconds,
+                        shareGroup.OrderByDateDescending,
+                        outputFilePath,
+                        shareGroup.OutputFilenamePrefix,
+                        settings.AppendPurchasePriceToStockNameColumn);
 
                     if (excelFileFullPath != null && settings.OpenOutputFileDirectory)
                     {

@@ -66,7 +66,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                     var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
                     if (!string.IsNullOrWhiteSpace(shareGroup.SymbolsFullPath) && !File.Exists(symbolsFullPath))
                     {
-                        Log.Error($"Shares input file (in appsettings.json) not found: {symbolsFullPath}");
+                        Log.ErrorFormat("Shares input file (in appsettings.json) not found: {0}", symbolsFullPath);
                         MessageBox.Show($"Shares input file (in appsettings.json) not found: {symbolsFullPath}", "SharesGainLossTracker", MessageBoxButton.OK);
                         throw new FileNotFoundException($"Shares input file (in appsettings.json) not found.", symbolsFullPath);
                     }
@@ -74,14 +74,14 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                     var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
                     if (outputFilePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
                     {
-                        Log.Error($"Output file path '{shareGroup.OutputFilePath}' in appsettings.json contains invalid characters.");
+                        Log.ErrorFormat("Output file path '{0}' in appsettings.json contains invalid characters.", shareGroup.OutputFilePath);
                         MessageBox.Show($"Output file path '{shareGroup.OutputFilePath}' in appsettings.json contains invalid characters.", "SharesGainLossTracker", MessageBoxButton.OK);
                         throw new ArgumentException($"Output file path '{shareGroup.OutputFilePath}' in appsettings.json contains invalid characters.");
                     }
 
                     if (shareGroup.OutputFilenamePrefix.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
                     {
-                        Log.Error($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' contains invalid characters.");
+                        Log.ErrorFormat("Output filename prefix '{0}' contains invalid characters.", shareGroup.OutputFilenamePrefix);
                         MessageBox.Show($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' contains invalid characters.", "SharesGainLossTracker", MessageBoxButton.OK);
                         throw new ArgumentException($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' in appsettings.json contains invalid characters.");
                     }

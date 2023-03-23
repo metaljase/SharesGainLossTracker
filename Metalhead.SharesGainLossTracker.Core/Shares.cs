@@ -4,7 +4,6 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 
 using log4net;
@@ -35,12 +34,12 @@ namespace Metalhead.SharesGainLossTracker.Core
 
         public static async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, int apiDelayPerCallSeconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
         {
-            Log.Info($"Processing input file: {sharesInputFileFullPath}");
+            Log.InfoFormat("Processing input file: {0}", sharesInputFileFullPath);
             Progress.Report(new ProgressLog(MessageImportance.Normal, $"Processing input file: {sharesInputFileFullPath}"));
 
             var sharesInput = CreateSharesInputFromCsvFile(sharesInputFileFullPath);
 
-            var httpResponseMessages = await GetStocksDataAsync(stocksApiUrl, sharesInput, apiDelayPerCallSeconds);
+            var httpResponseMessages = await GetStocksDataAsync(stocksApiUrl, apiDelayPerCallSeconds, sharesInput);
 
             // Map the data from the API using the appropriate model.
             IStock stocks = null;
@@ -60,17 +59,15 @@ namespace Metalhead.SharesGainLossTracker.Core
             {
                 ValidateFlattenedStocks(flattenedStocks, sharesInput);
             }
-            catch (ArgumentNullException)
+            catch (Exception ex)
             {
-                Log.Error($"Failed to fetch any stocks data for input file: {sharesInputFileFullPath})");
-                Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch any stocks data for input file: {sharesInputFileFullPath}", false));
-                return null;
-            }
-            catch (ArgumentException)
-            {
-                Log.Error($"Failed to fetch any stocks data for input file: {sharesInputFileFullPath})");
-                Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch any stocks data for input file: {sharesInputFileFullPath}", false));
-                return null;
+                if (ex is ArgumentNullException or ArgumentException)
+                {
+                    Log.Error($"Failed to fetch any stocks data for input file: {sharesInputFileFullPath}", ex);
+                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch any stocks data for input file: {sharesInputFileFullPath}", false));
+                    return null;
+                }
+                throw;
             }
 
             // Append share purchase price to stock name, to avoid ambiguity in Excel file when multiple shares of the same stock exist.
@@ -116,14 +113,28 @@ namespace Metalhead.SharesGainLossTracker.Core
             };
 
             // Create an Excel Workbook from the DataTables.
-            return CreateWorkbook(dataTables, outputFilePath, outputFilenamePrefix);
+            try
+            {
+                return CreateWorkbook(dataTables, "Shares", outputFilePath, outputFilenamePrefix);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ArgumentNullException or InvalidOperationException)
+                {
+                    Log.Error($"Error creating Excel Workbook due to no data.", ex);
+                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Error creating Excel Workbook due to no data.", false));
+                    return null;
+                }
+                throw;
+            }
         }
 
         public static List<Share> CreateSharesInputFromCsvFile(string sharesInputFileFullPath)
         {
             if (!string.IsNullOrWhiteSpace(sharesInputFileFullPath) && !File.Exists(sharesInputFileFullPath))
             {
-                Log.Error($"Shares input file not found: {sharesInputFileFullPath}");
+                Log.ErrorFormat("Shares input file not found: {0}", sharesInputFileFullPath);
+                Progress.Report(new ProgressLog(MessageImportance.Bad, $"Shares input file not found: {sharesInputFileFullPath}", false));
                 throw new FileNotFoundException($"Shares input file not found.", sharesInputFileFullPath);
             }
 
@@ -134,8 +145,9 @@ namespace Metalhead.SharesGainLossTracker.Core
 
                 if (!delimitedSharesInput.Any())
                 {
-                    Log.Error($"No correctly formatted shares input found in input file: {sharesInputFileFullPath}");
-                    throw new InvalidOperationException($"No correctly formatted shares input found in input file: {sharesInputFileFullPath}");
+                    Log.ErrorFormat("No correctly formatted shares found in input file: {0}", sharesInputFileFullPath);
+                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"No correctly formatted shares found in input file: {sharesInputFileFullPath}", false));
+                    throw new InvalidOperationException($"No correctly formatted shares found in input file: {sharesInputFileFullPath}");
                 }
             }
 
@@ -158,7 +170,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             return sharesInput;
         }
 
-        public static async Task<HttpResponseMessage[]> GetStocksDataAsync(string stocksApiUrl, List<Share> sharesInput, int apiDelayPerCallMilleseconds)
+        public static async Task<HttpResponseMessage[]> GetStocksDataAsync(string stocksApiUrl, int apiDelayPerCallMilleseconds, List<Share> sharesInput)
         {
             if (!Uri.TryCreate(stocksApiUrl, UriKind.Absolute, out Uri stocksApiUri) || (stocksApiUri.Scheme != Uri.UriSchemeHttp && stocksApiUri.Scheme != Uri.UriSchemeHttps))
             {
@@ -183,7 +195,7 @@ namespace Metalhead.SharesGainLossTracker.Core
                     // Fetch stock data using a Polly policy to trigger a retry if an HttpRequestException is thrown.
                     httpResponseMessages.Add(await policy.ExecuteAsync(async () =>
                     {
-                        return await GetStocksDataAsync(stocksApiUrl, apiDelayPerCallMilleseconds, stockSymbolName.Key, stockSymbolName.Value);
+                        return await GetStockDataAsync(stocksApiUrl, apiDelayPerCallMilleseconds, stockSymbolName.Key, stockSymbolName.Value);
                     }));
                 }
             }
@@ -192,7 +204,7 @@ namespace Metalhead.SharesGainLossTracker.Core
                 if (ex is HttpRequestException or TaskCanceledException)
                 {
                     // Swallow final HttpRequestException or TaskCanceledException so any successfully fetched stocks data can be processed.
-                    Log.Error($"Exception fetching stocks data.  Reached maximum retries.", ex);
+                    Log.Error("Error fetching stocks data.  Reached maximum retries.", ex);
                     Progress.Report(new ProgressLog(MessageImportance.Bad, $"Error fetching stocks data.  Reached maximum retries."));
                 }
                 else
@@ -218,14 +230,14 @@ namespace Metalhead.SharesGainLossTracker.Core
                     TimeSpan.FromMilliseconds(Math.Max(30000, apiDelayPerCallMilleseconds))
                 }, (exception, timeSpan) =>
                 {
-                    Log.Error($"Exception fetching stocks data.  Retrying in {timeSpan.TotalMilliseconds} milliseconds.", exception);
+                    Log.Warn($"Error fetching stocks data.  Retrying in {timeSpan.TotalMilliseconds} milliseconds.", exception);
                     Progress.Report(new ProgressLog(MessageImportance.Bad, $"Error fetching stocks data.  Retrying in {timeSpan.TotalMilliseconds} milliseconds."));
                 });
         }
 
-        private static async Task<HttpResponseMessage> GetStocksDataAsync(string stocksApiUrl, int apiDelayPerCallMilleseconds, string stockSymbol, string stockName)
+        private static async Task<HttpResponseMessage> GetStockDataAsync(string stocksApiUrl, int apiDelayPerCallMilleseconds, string stockSymbol, string stockName)
         {
-            Log.Info($"Sending request for stocks data: {stockSymbol} ({stockName})");
+            Log.InfoFormat("Sending request for stocks data: {0} ({1})", stockSymbol, stockName);
             Progress.Report(new ProgressLog(MessageImportance.Normal, $"Sending request for stocks data: {stockSymbol} ({stockName})"));
 
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, string.Format(stocksApiUrl, stockSymbol));
@@ -238,12 +250,12 @@ namespace Metalhead.SharesGainLossTracker.Core
                 {
                     if (response.IsSuccessStatusCode)
                     {
-                        Log.Info($"Received successful response fetching stocks data: {stockSymbol} ({stockName})");
+                        Log.InfoFormat("Received successful response fetching stocks data: {0} ({1})", stockSymbol, stockName);
                         Progress.Report(new ProgressLog(MessageImportance.Good, $"Received successful response fetching stocks data: {stockSymbol} ({stockName})"));
                     }
                     else
                     {
-                        Log.Error($"Received failure response fetching stocks data: {stockSymbol} ({stockName})");
+                        Log.ErrorFormat("Received failure response fetching stocks data: {0} ({1})", stockSymbol, stockName);
                         Progress.Report(new ProgressLog(MessageImportance.Bad, $"Received failure response fetching stocks data: {stockSymbol} ({stockName})"));
                     }
                 }
@@ -266,7 +278,7 @@ namespace Metalhead.SharesGainLossTracker.Core
         {
             if (flattenedStocks is null)
             {
-                throw new ArgumentNullException(nameof(flattenedStocks), "Failed to fetch any stocks data.");
+                throw new ArgumentNullException(nameof(flattenedStocks));
             }
 
             if (!flattenedStocks.Any())
@@ -288,7 +300,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             {
                 foreach (var symbols in stocksWithData)
                 {
-                    Log.Info($"Successfully fetched stocks data for: {symbols.Symbol} ({symbols.StockName})");
+                    Log.InfoFormat("Successfully fetched stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
                     Progress.Report(new ProgressLog(MessageImportance.Good, $"Successfully fetched stocks data for: {symbols.Symbol} ({symbols.StockName})"));
                 }
             }
@@ -297,7 +309,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             {
                 foreach (var symbols in stocksWithoutData)
                 {
-                    Log.Error($"Failed fetching stocks data for: {symbols.Symbol} ({symbols.StockName})");
+                    Log.ErrorFormat("Failed fetching stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
                     Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch stocks data for: {symbols.Symbol} ({symbols.StockName})"));
                 }
             }
@@ -337,24 +349,23 @@ namespace Metalhead.SharesGainLossTracker.Core
             return pivotDataTable;
         }
 
-        public static string CreateWorkbook(List<DataTable> dataTables, string outputFilePath, string outputFilenamePrefix)
+        public static string CreateWorkbook(List<DataTable> dataTables, string workbookTitle, string outputFilePath, string outputFilenamePrefix)
         {
-            // Validate dataTable.
             if (dataTables is null)
             {
-                throw new ArgumentNullException(nameof(dataTables), "DataTable cannot be null.");
+                throw new ArgumentNullException(nameof(dataTables));
             }
             else if (dataTables.Any(dt => dt.Rows.Count == 0))
             {
-                throw new InvalidOperationException("Cannot create Excel workbook because DataTable is invalid.");
+                throw new InvalidOperationException("Cannot create Excel Workbook because DataTable has no rows.");
             }
 
             var fullPath = GetOutputFullPath(outputFilePath, outputFilenamePrefix);
 
             // Create Excel workbook from List<DataTable> and save.
-            dataTables.ToExcelWorkbook("Shares", new FileInfo(fullPath));
+            dataTables.ToExcelWorkbook(workbookTitle, new FileInfo(fullPath));
 
-            Log.Info($"Successfully created: {fullPath}");
+            Log.InfoFormat("Successfully created: {0}", fullPath);
             Progress.Report(new ProgressLog(MessageImportance.Good, $"Successfully created: {fullPath}", true));
             return fullPath;
         }
