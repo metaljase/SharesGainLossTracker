@@ -71,45 +71,21 @@ namespace Metalhead.SharesGainLossTracker.Core
             }
 
             // Append share purchase price to stock name, to avoid ambiguity in Excel file when multiple shares of the same stock exist.
-            if (appendPriceToStockName)
-            {
-                foreach (var shareInput in sharesInput)
-                {
-                    shareInput.StockName = $"{shareInput.StockName} {shareInput.PurchasePrice}";
-                }
-            }
+            AppendPurchasePriceToStockName(appendPriceToStockName, sharesInput);
 
-            // Append sequential number to duplicate stock names to avoid ambiguity when pivoting data.
-            var duplicateSymbolNames = sharesInput.Select(s => s.StockName).GroupBy(s => s).Where(g => g.Count() > 1).Select(s => s.Key);
+            // Make duplicate stock names unique to avoid ambiguity when pivoting data.
+            MakeStockNamesUnique(sharesInput);
 
-            foreach (var duplicateStockName in duplicateSymbolNames)
-            {
-                var duplicateCount = 0;
-                foreach (var shareInput in sharesInput.Where(s => s.StockName.Equals(duplicateStockName, StringComparison.OrdinalIgnoreCase)))
-                {
-                    shareInput.StockName = $"{shareInput.StockName} {duplicateCount += 1}";
-                }
-            }
-
-            List<ShareOutput> shareOutputs = new();
-            foreach (var flattenedStock in flattenedStocks)
-            {
-                // Get shares that match current stock symbol.  Multiple shares per stock may exist, e.g. with different purchase prices.
-                var sharesForSymbol = sharesInput.Where(s => s.Symbol.Equals(flattenedStock.Symbol, StringComparison.OrdinalIgnoreCase));
-                foreach (var shareForSymbol in sharesForSymbol)
-                {
-                    shareOutputs.Add(new ShareOutput(shareForSymbol.StockName, shareForSymbol.Symbol, shareForSymbol.PurchasePrice, flattenedStock.Date, flattenedStock.AdjustedClose));
-                }
-            }
+            List<ShareOutput> sharesOutput = CreateSharesOutput(sharesInput, flattenedStocks);
 
             // Order data by date.
-            shareOutputs = orderByDateDescending ? shareOutputs.OrderByDescending(o => o.Date).ToList() : shareOutputs.OrderBy(o => o.Date).ToList();
+            sharesOutput = orderByDateDescending ? sharesOutput.OrderByDescending(o => o.Date).ToList() : sharesOutput.OrderBy(o => o.Date).ToList();
 
             // Get a DataTable containing the gain/loss, and a DataTable containing the adjusted close price.
             List<DataTable> dataTables = new()
             {
-                GetGainLossPivotedDataTable(shareOutputs, "Gain/Loss"),
-                GetAdjustedClosePivotedDataTable(shareOutputs, "Adjusted Close")
+                GetGainLossPivotedDataTable(sharesOutput, "Gain/Loss"),
+                GetAdjustedClosePivotedDataTable(sharesOutput, "Adjusted Close")
             };
 
             // Create an Excel Workbook from the DataTables.
@@ -176,26 +152,18 @@ namespace Metalhead.SharesGainLossTracker.Core
             {
                 Log.Error("URL for stocks API is invalid.");
                 throw new ArgumentException("URL for stocks API is invalid.");
-            }            
-
-            // Get a distinct list of stock symbols, so data is only fetched once per stock when multiple shares of the same stock exist.
-            Dictionary<string, string> symbolStockNames = new();
-            foreach (var distinctSymbol in sharesInput.Select(s => s.Symbol).Distinct())
-            {
-                symbolStockNames.Add(distinctSymbol, sharesInput.FirstOrDefault(s => s.Symbol.Equals(distinctSymbol, StringComparison.OrdinalIgnoreCase)).StockName);
             }
 
             var policy = GetRetryPolicy(apiDelayPerCallMilleseconds);
-
             List<HttpResponseMessage> httpResponseMessages = new();
             try
             {
-                foreach (var stockSymbolName in symbolStockNames)
+                foreach (var symbolName in GetDistinctSymbolsNames(sharesInput))
                 {
                     // Fetch stock data using a Polly policy to trigger a retry if an HttpRequestException is thrown.
                     httpResponseMessages.Add(await policy.ExecuteAsync(async () =>
                     {
-                        return await GetStockDataAsync(stocksApiUrl, apiDelayPerCallMilleseconds, stockSymbolName.Key, stockSymbolName.Value);
+                        return await GetStockDataAsync(stocksApiUrl, apiDelayPerCallMilleseconds, symbolName.Symbol, symbolName.StockName);
                     }));
                 }
             }
@@ -286,33 +254,69 @@ namespace Metalhead.SharesGainLossTracker.Core
                 throw new ArgumentException("Failed to fetch any stocks data.", nameof(flattenedStocks));
             }
 
-            // Get a distinct list of stock symbols from the input, with the first associated stock name found (could be multiple).
-            List<Share> distinctStocks = sharesInput
+            foreach (var stock in GetDistinctSymbolsNames(sharesInput))
+            {
+                if (flattenedStocks.Any(s => s.Symbol.Equals(stock.Symbol, StringComparison.OrdinalIgnoreCase)))
+                {
+                    Log.InfoFormat("Successfully fetched stocks data for: {0} ({1})", stock.Symbol, stock.StockName);
+                    Progress.Report(new ProgressLog(MessageImportance.Good, $"Successfully fetched stocks data for: {stock.Symbol} ({stock.StockName})"));
+                }
+                else
+                {
+                    Log.ErrorFormat("Failed fetching stocks data for: {0} ({1})", stock.Symbol, stock.StockName);
+                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch stocks data for: {stock.Symbol} ({stock.StockName})"));
+                }
+            }
+        }
+
+        private static IEnumerable<Share> GetDistinctSymbolsNames(List<Share> sharesInput)
+        {
+            // Get distinct stock symbols from the input with the first associated stock name found (could be multiple).
+            return sharesInput
                 .GroupBy(s => s.Symbol) // Group by the Symbol property
                 .Select(g => g.First()) // Select the first item of each group
-                .Select(s => new Share { Symbol = s.Symbol, StockName = s.StockName })
-                .ToList();
+                .Select(s => new Share { Symbol = s.Symbol, StockName = s.StockName });
+        }
 
-            var stocksWithData = distinctStocks.Where(ss => flattenedStocks.Any(s => s.Symbol.Equals(ss.Symbol, StringComparison.OrdinalIgnoreCase)));
-            var stocksWithoutData = distinctStocks.Where(ss => !stocksWithData.Contains(ss));
-
-            if (stocksWithData.Any())
+        private static void AppendPurchasePriceToStockName(bool appendPriceToStockName, List<Share> sharesInput)
+        {
+            if (appendPriceToStockName)
             {
-                foreach (var symbols in stocksWithData)
+                foreach (var shareInput in sharesInput)
                 {
-                    Log.InfoFormat("Successfully fetched stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
-                    Progress.Report(new ProgressLog(MessageImportance.Good, $"Successfully fetched stocks data for: {symbols.Symbol} ({symbols.StockName})"));
+                    shareInput.StockName = $"{shareInput.StockName} {shareInput.PurchasePrice}";
+                }
+            }
+        }
+
+        private static void MakeStockNamesUnique(List<Share> sharesInput)
+        {
+            var duplicateStockNames = sharesInput.Select(s => s.StockName).GroupBy(s => s).Where(g => g.Count() > 1).Select(s => s.Key);
+
+            foreach (var duplicateStockName in duplicateStockNames)
+            {
+                var duplicateCount = 0;
+                foreach (var shareInput in sharesInput.Where(s => s.StockName.Equals(duplicateStockName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    shareInput.StockName = $"{shareInput.StockName} {duplicateCount += 1}";
+                }
+            }
+        }
+
+        private static List<ShareOutput> CreateSharesOutput(List<Share> sharesInput, List<FlattenedStock> flattenedStocks)
+        {
+            List<ShareOutput> sharesOutput = new();
+            foreach (var flattenedStock in flattenedStocks)
+            {
+                // Get shares that match current stock symbol.  Multiple shares per stock may exist, e.g. with different purchase prices.
+                var sharesForSymbol = sharesInput.Where(s => s.Symbol.Equals(flattenedStock.Symbol, StringComparison.OrdinalIgnoreCase));
+                foreach (var shareForSymbol in sharesForSymbol)
+                {
+                    sharesOutput.Add(new ShareOutput(shareForSymbol.StockName, shareForSymbol.Symbol, shareForSymbol.PurchasePrice, flattenedStock.Date, flattenedStock.AdjustedClose));
                 }
             }
 
-            if (stocksWithoutData.Any())
-            {
-                foreach (var symbols in stocksWithoutData)
-                {
-                    Log.ErrorFormat("Failed fetching stocks data for: {0} ({1})", symbols.Symbol, symbols.StockName);
-                    Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch stocks data for: {symbols.Symbol} ({symbols.StockName})"));
-                }
-            }
+            return sharesOutput;
         }
 
         public static DataTable GetGainLossPivotedDataTable(List<ShareOutput> sharesOutput, string dataTableName)
