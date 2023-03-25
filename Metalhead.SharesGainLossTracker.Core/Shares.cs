@@ -18,18 +18,15 @@ namespace Metalhead.SharesGainLossTracker.Core
     {
         private static ILog Log;
         private static IProgress<ProgressLog> Progress;
-        private static readonly HttpClient Client = new();
+        private static HttpClient HttpClient;
+        private static IEnumerable<IStock> IStocks;
 
-        public Shares(ILog log)
-        {
-            Log = log;
-            Progress = new Progress<ProgressLog>();
-        }
-
-        public Shares(ILog log, IProgress<ProgressLog> progress)
+        public Shares(ILog log, IProgress<ProgressLog> progress, HttpClient httpClient, IEnumerable<IStock> iStocks)
         {
             Log = log;
             Progress = progress;
+            HttpClient = httpClient;
+            IStocks = iStocks;
         }
 
         public static async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, int apiDelayPerCallSeconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
@@ -37,21 +34,17 @@ namespace Metalhead.SharesGainLossTracker.Core
             Log.InfoFormat("Processing input file: {0}", sharesInputFileFullPath);
             Progress.Report(new ProgressLog(MessageImportance.Normal, $"Processing input file: {sharesInputFileFullPath}"));
 
+            IStock stocks = IStocks.FirstOrDefault(s => s.GetType().Name.Equals(model, StringComparison.OrdinalIgnoreCase));
+            if (stocks is null)
+            {
+                throw new InvalidOperationException($"No class implementing IStock could be found that matches '{model}' (in settings).");
+            }
+
             var sharesInput = CreateSharesInputFromCsvFile(sharesInputFileFullPath);
 
             var httpResponseMessages = await GetStocksDataAsync(stocksApiUrl, apiDelayPerCallSeconds, sharesInput);
 
             // Map the data from the API using the appropriate model.
-            IStock stocks = null;
-            if (model.Equals("AlphaVantage", StringComparison.OrdinalIgnoreCase))
-            {
-                stocks = new AlphaVantage(Log, Progress);
-            }
-            else if (model.Equals("Marketstack", StringComparison.OrdinalIgnoreCase))
-            {
-                stocks = new Marketstack(Log, Progress);
-            }
-
             var flattenedStocks = await stocks.GetStocksDataAsync(httpResponseMessages);
 
             // Validate data was returned from the API and mapped.
@@ -210,7 +203,7 @@ namespace Metalhead.SharesGainLossTracker.Core
 
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, string.Format(stocksApiUrl, stockSymbol));
 
-            var result = await Client.SendAsync(httpRequestMessage).ContinueWith((task) =>
+            var result = await HttpClient.SendAsync(httpRequestMessage).ContinueWith((task) =>
             {
                 HttpResponseMessage response = task.Result;
 

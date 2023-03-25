@@ -3,16 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 using log4net;
 using Metalhead.SharesGainLossTracker.Core;
@@ -27,13 +21,17 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
     {
         private static ILog Log;
         private static Settings AppSettings;
+        private readonly Progress<ProgressLog> Progress;
+        private readonly Shares Shares;
         private bool AutoScroll = true;
         private bool CreatedExcelFile = false;
 
-        public MainWindow(ILog log, Settings settings)
+        public MainWindow(ILog log, Settings settings, IProgress<ProgressLog> progress, Shares shares)
         {
             Log = log;
             AppSettings = settings;
+            Progress = (Progress<ProgressLog>)progress;
+            Shares = shares;
 
             InitializeComponent();
         }
@@ -65,12 +63,10 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                 CreatedExcelFile = false;
                 logTextBlock.Text = string.Empty;
                 List<string> outputFilePathOpened = new();
+                
+                Progress.ProgressChanged += ProgressLog;                
 
                 // Get stocks data for all groups and create an Excel workbook for each.
-                Progress<ProgressLog> progressLog = new();
-                progressLog.ProgressChanged += ProgressLog;                
-                var shares = new Shares(Log, progressLog);
-
                 foreach (var shareGroup in AppSettings.Groups.Where(g => g.Enabled))
                 {
                     var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
