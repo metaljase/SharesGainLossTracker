@@ -42,7 +42,7 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
             Console.ReadKey();
         }
 
-        static IHostBuilder CreateHostBuilder()
+        private static IHostBuilder CreateHostBuilder()
         {
             var configuration = GetConfiguration();
             var settings = configuration.GetSection("sharesSettings").Get<Settings>();

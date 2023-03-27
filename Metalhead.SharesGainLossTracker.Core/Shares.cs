@@ -16,10 +16,10 @@ namespace Metalhead.SharesGainLossTracker.Core
 {
     public class Shares
     {
-        private static ILogger<Shares> Log;
-        private static IProgress<ProgressLog> Progress;
-        private static HttpClient HttpClient;
-        private static IEnumerable<IStock> IStocks;
+        public ILogger<Shares> Log { get; }
+        public IProgress<ProgressLog> Progress { get; }
+        public HttpClient HttpClient { get; }
+        public IEnumerable<IStock> IStocks { get; }
 
         public Shares(ILogger<Shares> log, IProgress<ProgressLog> progress, HttpClient httpClient, IEnumerable<IStock> iStocks)
         {
@@ -29,7 +29,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             IStocks = iStocks;
         }
 
-        public static async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, int apiDelayPerCallSeconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
+        public async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, int apiDelayPerCallSeconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
         {
             Log.LogInformation("Processing input file: {SharesInputFileFullPath}", sharesInputFileFullPath);
             Progress.Report(new ProgressLog(MessageImportance.Normal, $"Processing input file: {sharesInputFileFullPath}"));
@@ -98,7 +98,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             }
         }
 
-        public static List<Share> CreateSharesInputFromCsvFile(string sharesInputFileFullPath)
+        public List<Share> CreateSharesInputFromCsvFile(string sharesInputFileFullPath)
         {
             if (!string.IsNullOrWhiteSpace(sharesInputFileFullPath) && !File.Exists(sharesInputFileFullPath))
             {
@@ -123,7 +123,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             return CreateSharesInputFromCsv(delimitedSharesInput);
         }
 
-        public static List<Share> CreateSharesInputFromCsv(IEnumerable<string> delimitedSharesInput)
+        public List<Share> CreateSharesInputFromCsv(IEnumerable<string> delimitedSharesInput)
         {
             // Split delimited shares input, trim whitespace, and output to shares input object.
             var sharesInput = delimitedSharesInput.Select(item => item.Split(',').Select(a => a.Trim()).ToList())
@@ -139,7 +139,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             return sharesInput;
         }
 
-        public static async Task<HttpResponseMessage[]> GetStocksDataAsync(string stocksApiUrl, int apiDelayPerCallMilleseconds, List<Share> sharesInput)
+        public async Task<HttpResponseMessage[]> GetStocksDataAsync(string stocksApiUrl, int apiDelayPerCallMilleseconds, List<Share> sharesInput)
         {
             if (!Uri.TryCreate(stocksApiUrl, UriKind.Absolute, out Uri stocksApiUri) || (stocksApiUri.Scheme != Uri.UriSchemeHttp && stocksApiUri.Scheme != Uri.UriSchemeHttps))
             {
@@ -177,7 +177,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             return httpResponseMessages.ToArray();
         }
 
-        private static AsyncRetryPolicy GetRetryPolicy(int apiDelayPerCallMilleseconds)
+        private AsyncRetryPolicy GetRetryPolicy(int apiDelayPerCallMilleseconds)
         {
             return Policy
                 .HandleInner<HttpRequestException>()
@@ -196,7 +196,7 @@ namespace Metalhead.SharesGainLossTracker.Core
                 });
         }
 
-        private static async Task<HttpResponseMessage> GetStockDataAsync(string stocksApiUrl, int apiDelayPerCallMilleseconds, string stockSymbol, string stockName)
+        private async Task<HttpResponseMessage> GetStockDataAsync(string stocksApiUrl, int apiDelayPerCallMilleseconds, string stockSymbol, string stockName)
         {
             Log.LogInformation("Sending request for stocks data: {StockSymbol} ({StockName})", stockSymbol, stockName);
             Progress.Report(new ProgressLog(MessageImportance.Normal, $"Sending request for stocks data: {stockSymbol} ({stockName})"));
@@ -235,7 +235,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             return result;
         }
 
-        private static void ValidateFlattenedStocks(List<FlattenedStock> flattenedStocks, List<Share> sharesInput)
+        private void ValidateFlattenedStocks(List<FlattenedStock> flattenedStocks, List<Share> sharesInput)
         {
             if (flattenedStocks is null)
             {
@@ -346,7 +346,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             return pivotDataTable;
         }
 
-        public static string CreateWorkbook(List<DataTable> dataTables, string workbookTitle, string outputFilePath, string outputFilenamePrefix)
+        public string CreateWorkbook(List<DataTable> dataTables, string workbookTitle, string outputFilePath, string outputFilenamePrefix)
         {
             if (dataTables is null)
             {

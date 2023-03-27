@@ -12,13 +12,13 @@ namespace Metalhead.SharesGainLossTracker.Core
 {
     public class AlphaVantage : IStock
     {
-        private readonly ILogger<AlphaVantage> Log;
-        private readonly IProgress<ProgressLog> Progress;
+        public ILogger<AlphaVantage> Log { get; }
+        public IProgress<ProgressLog> Progress { get; }
 
         public AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> progress)
         {
-            this.Log = log;
-            this.Progress = progress;
+            Log = log;
+            Progress = progress;
         }
 
         async Task<List<FlattenedStock>> IStock.GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages)

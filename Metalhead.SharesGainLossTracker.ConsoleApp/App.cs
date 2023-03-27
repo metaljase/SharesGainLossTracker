@@ -12,9 +12,9 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
 {
     public class App
     {
-        private readonly ILogger<App> Log;
-        private static Settings AppSettings;
-        private readonly Shares Shares;
+        public ILogger<App> Log { get; }
+        public Settings AppSettings { get; }
+        public Shares Shares { get; }
 
         public App(ILogger<App> log, Settings settings, Shares shares)
         {

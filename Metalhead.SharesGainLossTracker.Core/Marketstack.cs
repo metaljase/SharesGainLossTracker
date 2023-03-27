@@ -12,13 +12,13 @@ namespace Metalhead.SharesGainLossTracker.Core
 {
     public class Marketstack : IStock
     {
-        private readonly ILogger<Marketstack> Log;
-        private readonly IProgress<ProgressLog> Progress;
+        public ILogger<Marketstack> Log { get; }
+        public IProgress<ProgressLog> Progress { get; }
 
         public Marketstack(ILogger<Marketstack> log, IProgress<ProgressLog> progress)
         {
-            this.Log = log;
-            this.Progress = progress;
+            Log = log;
+            Progress = progress;
         }
 
         async Task<List<FlattenedStock>> IStock.GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages)

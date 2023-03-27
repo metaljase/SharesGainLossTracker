@@ -19,12 +19,12 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static ILogger<MainWindow> Log;
-        private static Settings AppSettings;
-        private readonly IProgress<ProgressLog> Progress;
-        private readonly Shares Shares;
-        private bool AutoScroll = true;
-        private bool CreatedExcelFile = false;
+        public ILogger<MainWindow> Log { get; }
+        public Settings AppSettings { get; }
+        public IProgress<ProgressLog> Progress { get; }
+        public Shares Shares { get; }
+        public bool AutoScroll { get; set; } = true;
+        public bool CreatedExcelFile { get; set; }
 
         public MainWindow(ILogger<MainWindow> log, Settings settings, IProgress<ProgressLog> progress, Shares shares)
         {
