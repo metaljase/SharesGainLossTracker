@@ -1,21 +1,21 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
-using log4net;
 using Metalhead.SharesGainLossTracker.Core.Models;
 
 namespace Metalhead.SharesGainLossTracker.Core
 {
     public class Marketstack : IStock
     {
-        private readonly ILog Log;
+        private readonly ILogger<Marketstack> Log;
         private readonly IProgress<ProgressLog> Progress;
 
-        public Marketstack(ILog log, IProgress<ProgressLog> progress)
+        public Marketstack(ILogger<Marketstack> log, IProgress<ProgressLog> progress)
         {
             this.Log = log;
             this.Progress = progress;
@@ -31,7 +31,7 @@ namespace Metalhead.SharesGainLossTracker.Core
                 if (item.IsSuccessStatusCode)
                 {
                     var stock = await item.Content.ReadFromJsonAsync<MarketstackRoot>();
-                    if (stock != null && stock.Data != null && stock.Data.Length > 0)
+                    if (stock is not null && stock.Data is not null && stock.Data.Length > 0)
                     {
                         stocks.Add(stock);
                     }
@@ -44,7 +44,7 @@ namespace Metalhead.SharesGainLossTracker.Core
 
             if (hadDeserializingErrors)
             {
-                Log.Error("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.");
+                Log.LogError("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.");
                 Progress.Report(new ProgressLog(MessageImportance.Bad, "Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting."));
             }
 
@@ -55,9 +55,9 @@ namespace Metalhead.SharesGainLossTracker.Core
         {
             var flattenedStocks = new List<FlattenedStock>();
 
-            if (stocks != null)
+            if (stocks is not null)
             {
-                flattenedStocks.AddRange(stocks.Where(s => s.Data != null).SelectMany(stock => stock.Data).Select(data => new FlattenedStock(DateTime.Parse(data.Date), data.Symbol, data.AdjustedClose)));
+                flattenedStocks.AddRange(stocks.Where(s => s.Data is not null).SelectMany(stock => stock.Data).Select(data => new FlattenedStock(DateTime.Parse(data.Date), data.Symbol, data.AdjustedClose)));
             }
 
             return flattenedStocks;

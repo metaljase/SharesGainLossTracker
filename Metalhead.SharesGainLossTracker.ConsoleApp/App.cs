@@ -1,22 +1,22 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-using log4net;
 using Metalhead.SharesGainLossTracker.Core;
 
 namespace Metalhead.SharesGainLossTracker.ConsoleApp
 {
     public class App
     {
-        private static ILog Log;
+        private readonly ILogger<App> Log;
         private static Settings AppSettings;
         private readonly Shares Shares;
 
-        public App(ILog log, Settings settings, Shares shares)
+        public App(ILogger<App> log, Settings settings, Shares shares)
         {
             Log = log;
             AppSettings = settings;
@@ -48,7 +48,7 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                     shareGroup.OutputFilenamePrefix,
                     AppSettings.AppendPurchasePriceToStockNameColumn);
 
-                if (excelFileFullPath != null && AppSettings.OpenOutputFileDirectory)
+                if (excelFileFullPath is not null && AppSettings.OpenOutputFileDirectory)
                 {
                     if (Directory.Exists(outputFilePath))
                     {
@@ -61,7 +61,7 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                     }
                     else
                     {
-                        Log.Error($"Folder does not exist: {outputFilePath}");
+                        Log.LogError("Folder does not exist: ", outputFilePath);
                     }
                 }
             }

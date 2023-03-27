@@ -19,7 +19,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="10" />
         </Grid.RowDefinitions>
-        <Button x:Name="runButton" Grid.Column="1" Grid.Row="1" Margin="0,0,0,10" Padding="6,2,6,4" Content="Download shares data and create Excel file" Click="RunButton_ClickAsync" FontSize="14" FontWeight="Bold" />
+        <Button x:Name="runButton" Grid.Column="1" Grid.Row="1" Margin="0,0,0,10" Padding="6,2,6,4" Content="Download stocks data and create Excel file" Click="RunButton_ClickAsync" FontSize="14" FontWeight="Bold" />
 
         <Border Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" BorderBrush="Black" BorderThickness="1">
             <ScrollViewer x:Name="logScrollViewer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Foreground="{x:Null}" ScrollChanged="LogScrollViewer_ScrollChanged">

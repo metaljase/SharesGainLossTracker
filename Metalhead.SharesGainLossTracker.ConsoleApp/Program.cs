@@ -9,17 +9,14 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
-using log4net;
-using log4net.Config;
 using Metalhead.SharesGainLossTracker.Core;
 using Metalhead.SharesGainLossTracker.Core.Models;
+using Serilog;
 
 namespace Metalhead.SharesGainLossTracker.ConsoleApp
 {
     public class Program
     {
-        private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         static async Task Main()
         {
             using IHost host = CreateHostBuilder().Build();
@@ -29,11 +26,16 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
 
             try
             {
+                ValidateSettings(host.Services.GetRequiredService<Settings>());
                 await services.GetRequiredService<App>().RunAsync();
             }
             catch (Exception ex)
             {
-                Log.Fatal("Crashed.  See log file for details.", ex);
+                Log.Logger.Fatal(ex, "Application exited unexpectedly.  See log file for details.");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
             }
 
             Console.WriteLine("Press any key to exit.");
@@ -42,12 +44,8 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
 
         static IHostBuilder CreateHostBuilder()
         {
-            // Load Log4Net configuration.
-            var logRepository = LogManager.GetRepository(Assembly.GetEntryAssembly());
-            XmlConfigurator.Configure(logRepository, new FileInfo("log4net.config"));
-
             var configuration = GetConfiguration();
-            var settings = GetSettings(configuration);
+            var settings = configuration.GetSection("sharesSettings").Get<Settings>();
 
             var stockApiSources = Assembly.Load("Metalhead.SharesGainLossTracker.Core")
                 .GetTypes().Where(type => typeof(IStock).IsAssignableFrom(type) && !type.IsInterface);
@@ -59,7 +57,6 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                     services.AddHttpClient();
                     services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
                     services.AddSingleton<Settings>(settings);
-                    services.AddSingleton<ILog>(Log);
                     services.AddSingleton<IProgress<ProgressLog>, Progress<ProgressLog>>();
                     services.AddSingleton<App>();
                     services.AddSingleton<Shares>();
@@ -68,7 +65,8 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                     {
                         services.AddSingleton(typeof(IStock), stockApiSource);
                     }
-                });
+                })
+                .UseSerilog();
         }
 
         private static IConfigurationRoot GetConfiguration()
@@ -86,26 +84,29 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
             // WARNING: When overriding appsettings.json with environment settings, be careful with arrays.  Different
             // amounts of elements in arrays will be mixed into appsettings.json, i.e. not wiped over and rewritten.
 
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(builder.Build())
+                .Enrich.FromLogContext()
+                .CreateLogger();
+
             return builder.Build();
         }
 
-        private static Settings GetSettings(IConfigurationRoot config)
+        private static void ValidateSettings(Settings settings)
         {
-            var settings = config.GetSection("sharesSettings").Get<Settings>();
-
             if (settings.Groups is null)
             {
-                Log.Error("Groups array is missing from appsettings.json.");
+                Log.Logger.Error("Groups array is missing from appsettings.json.");
                 throw new ArgumentNullException("Groups", "Groups array is missing from appsettings.json.");
             }
             else if (!settings.Groups.Any())
             {
-                Log.Error("Groups array contains zero elements in appsettings.json.");
+                Log.Logger.Error("Groups array contains zero elements in appsettings.json.");
                 throw new ArgumentException("Groups array contains zero elements in appsettings.json.");
             }
             else if (!settings.Groups.Any(e => e.Enabled))
             {
-                Log.Error("No enabled elements in appsettings.json.");
+                Log.Logger.Error("No enabled elements in appsettings.json.");
                 throw new ArgumentException("No enabled elements in appsettings.json.");
             }
 
@@ -114,25 +115,23 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                 var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
                 if (!string.IsNullOrWhiteSpace(shareGroup.SymbolsFullPath) && !File.Exists(symbolsFullPath))
                 {
-                    Log.ErrorFormat("Shares input file (in appsettings.json) not found: {0}", symbolsFullPath);
+                    Log.Error("Shares input file (in appsettings.json) not found: {0}", symbolsFullPath);
                     throw new FileNotFoundException($"Shares input file (in appsettings.json) not found.", symbolsFullPath);
                 }
 
                 var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
                 if (outputFilePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
                 {
-                    Log.ErrorFormat("Output file path '{0}' in appsettings.json contains invalid characters.", shareGroup.OutputFilePath);
+                    Log.Error("Output file path '{0}' in appsettings.json contains invalid characters.", shareGroup.OutputFilePath);
                     throw new ArgumentException($"Output file path '{shareGroup.OutputFilePath}' in appsettings.json contains invalid characters.");
                 }
 
                 if (shareGroup.OutputFilenamePrefix.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
                 {
-                    Log.ErrorFormat("Output filename prefix '{0}' contains invalid characters.", shareGroup.OutputFilenamePrefix);
+                    Log.Error("Output filename prefix '{0}' contains invalid characters.", shareGroup.OutputFilenamePrefix);
                     throw new ArgumentException($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' in appsettings.json contains invalid characters.");
                 }
             }
-
-            return settings;
-        }   
+        }
     }
 }

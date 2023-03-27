@@ -1,21 +1,21 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
-using log4net;
 using Metalhead.SharesGainLossTracker.Core.Models;
 
 namespace Metalhead.SharesGainLossTracker.Core
 {
     public class AlphaVantage : IStock
     {
-        private readonly ILog Log;
+        private readonly ILogger<AlphaVantage> Log;
         private readonly IProgress<ProgressLog> Progress;
 
-        public AlphaVantage(ILog log, IProgress<ProgressLog> progress)
+        public AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> progress)
         {
             this.Log = log;
             this.Progress = progress;
@@ -31,7 +31,7 @@ namespace Metalhead.SharesGainLossTracker.Core
                 if (item.IsSuccessStatusCode)
                 {
                     var stock = await item.Content.ReadFromJsonAsync<AlphaVantageRoot>();
-                    if (stock != null && stock.MetaData != null && stock.Data != null && stock.Data.Count > 0)
+                    if (stock is not null && stock.MetaData is not null && stock.Data is not null && stock.Data.Count > 0)
                     {
                         stocks.Add(stock);
                     }
@@ -44,7 +44,7 @@ namespace Metalhead.SharesGainLossTracker.Core
 
             if (hadDeserializingErrors)
             {
-                Log.Error("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.");
+                Log.LogError("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.");
                 Progress.Report(new ProgressLog(MessageImportance.Bad, "Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds settings."));
             }
 
@@ -57,7 +57,7 @@ namespace Metalhead.SharesGainLossTracker.Core
 
             if (stocks != null)
             {
-                foreach (var stock in stocks.Where(s => s.MetaData != null && s.Data != null))
+                foreach (var stock in stocks.Where(s => s.MetaData is not null && s.Data != null))
                 {
                     foreach (var data in stock.Data)
                     {

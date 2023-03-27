@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,7 +9,6 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-using log4net;
 using Metalhead.SharesGainLossTracker.Core;
 using Metalhead.SharesGainLossTracker.Core.Models;
 
@@ -19,14 +19,14 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static ILog Log;
+        private static ILogger<MainWindow> Log;
         private static Settings AppSettings;
-        private readonly Progress<ProgressLog> Progress;
+        private readonly IProgress<ProgressLog> Progress;
         private readonly Shares Shares;
         private bool AutoScroll = true;
         private bool CreatedExcelFile = false;
 
-        public MainWindow(ILog log, Settings settings, IProgress<ProgressLog> progress, Shares shares)
+        public MainWindow(ILogger<MainWindow> log, Settings settings, IProgress<ProgressLog> progress, Shares shares)
         {
             Log = log;
             AppSettings = settings;
@@ -34,6 +34,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
             Shares = shares;
 
             InitializeComponent();
+            ((Progress<ProgressLog>)Progress).ProgressChanged += ProgressLog;
         }
 
         public static SolidColorBrush GetDownloadLogForegroundColour(MessageImportance importance)
@@ -57,6 +58,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
 
         private async void RunButton_ClickAsync(object sender, RoutedEventArgs e)
         {
+            string excelFileFullPath = null;
             try
             {
                 runButton.IsEnabled = false;
@@ -64,8 +66,6 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                 logTextBlock.Text = string.Empty;
                 List<string> outputFilePathOpened = new();
                 
-                Progress.ProgressChanged += ProgressLog;                
-
                 // Get stocks data for all groups and create an Excel workbook for each.
                 foreach (var shareGroup in AppSettings.Groups.Where(g => g.Enabled))
                 {
@@ -77,7 +77,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                         outputFilePath = $"{outputFilePath}{DateTime.Now.Date:yyyy-MM-dd}";
                     }
 
-                    var excelFileFullPath = await Shares.CreateWorkbookAsync(
+                    excelFileFullPath = await Shares.CreateWorkbookAsync(
                         shareGroup.Model,
                         symbolsFullPath,
                         shareGroup.ApiUrl,
@@ -87,7 +87,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                         shareGroup.OutputFilenamePrefix,
                         AppSettings.AppendPurchasePriceToStockNameColumn);
 
-                    if (excelFileFullPath != null && AppSettings.OpenOutputFileDirectory)
+                    if (excelFileFullPath is not null && AppSettings.OpenOutputFileDirectory)
                     {
                         if (Directory.Exists(outputFilePath))
                         {
@@ -100,7 +100,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                         }
                         else
                         {
-                            Log.Error($"Folder does not exist: {outputFilePath}");
+                            Log.LogError("Folder does not exist: ", outputFilePath);
                         }
                     }
                 }
@@ -111,7 +111,8 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
             }
             catch (Exception ex)
             {
-                Log.Fatal(ex);
+                Log.LogError(ex, "An unexpected error occurred.  See log file for details.");
+                Progress.Report(new ProgressLog(MessageImportance.Bad, "An unexpected error occurred.  See log file for details.", excelFileFullPath is not null));
             }
         }      
 
