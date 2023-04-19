@@ -9,8 +9,8 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-using Metalhead.SharesGainLossTracker.Core;
 using Metalhead.SharesGainLossTracker.Core.Models;
+using Metalhead.SharesGainLossTracker.Core.Services;
 
 namespace Metalhead.SharesGainLossTracker.WpfApp
 {
@@ -22,16 +22,16 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
         public ILogger<MainWindow> Log { get; }
         public Settings AppSettings { get; }
         public IProgress<ProgressLog> Progress { get; }
-        public Shares Shares { get; }
+        public IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; }
         public bool AutoScroll { get; set; } = true;
         public bool CreatedExcelFile { get; set; }
 
-        public MainWindow(ILogger<MainWindow> log, Settings settings, IProgress<ProgressLog> progress, Shares shares)
+        public MainWindow(ILogger<MainWindow> log, Settings settings, IProgress<ProgressLog> progress, IExcelWorkbookCreatorService excelWorkbookCreatorService)
         {
             Log = log;
             AppSettings = settings;
             Progress = (Progress<ProgressLog>)progress;
-            Shares = shares;
+            ExcelWorkbookCreatorService = excelWorkbookCreatorService;
 
             InitializeComponent();
             ((Progress<ProgressLog>)Progress).ProgressChanged += ProgressLog;
@@ -66,7 +66,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                 logTextBlock.Text = string.Empty;
                 List<string> outputFilePathOpened = new();
                 
-                // Get stocks data for all groups and create an Excel workbook for each.
+                // Get stocks data for all groups and create an Excel Workbook for each.
                 foreach (var shareGroup in AppSettings.Groups.Where(g => g.Enabled))
                 {
                     var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
@@ -77,7 +77,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                         outputFilePath = $"{outputFilePath}{DateTime.Now.Date:yyyy-MM-dd}";
                     }
 
-                    excelFileFullPath = await Shares.CreateWorkbookAsync(
+                    excelFileFullPath = await ExcelWorkbookCreatorService.CreateWorkbookAsync(
                         shareGroup.Model,
                         symbolsFullPath,
                         shareGroup.ApiUrl,

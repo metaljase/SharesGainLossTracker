@@ -7,7 +7,7 @@ namespace Metalhead.SharesGainLossTracker.Core.Models
         public string StockName { get; set; }
         public string Symbol { get; set; }
         public double PurchasePrice { get; set; }
-        public string Date { get; set; }
+        public string Date { get; }
         public double? AdjustedClose { get; set; }
         public double? GainLoss { get; }
 

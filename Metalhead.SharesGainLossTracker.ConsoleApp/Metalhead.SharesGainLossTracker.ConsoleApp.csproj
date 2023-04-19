@@ -8,21 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Models\**" />
-    <EmbeddedResource Remove="Models\**" />
-    <None Remove="Models\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="AlphaVantage.cs" />
-    <Compile Remove="Extensions.cs" />
-    <Compile Remove="Helper.cs" />
-    <Compile Remove="IShare.cs" />
-    <Compile Remove="Marketstack.cs" />
-    <Compile Remove="Shares.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="appsettings.Development.json" />
     <None Remove="appsettings.json" />
     <None Remove="icon.ico" />
@@ -49,12 +34,6 @@
 
   <ItemGroup>
     <Resource Include="icon.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="ShareSymbols.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <ItemGroup>

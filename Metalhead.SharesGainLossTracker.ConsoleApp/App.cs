@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-using Metalhead.SharesGainLossTracker.Core;
+using Metalhead.SharesGainLossTracker.Core.Services;
 
 namespace Metalhead.SharesGainLossTracker.ConsoleApp
 {
@@ -14,18 +14,18 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
     {
         public ILogger<App> Log { get; }
         public Settings AppSettings { get; }
-        public Shares Shares { get; }
+        public IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; }
 
-        public App(ILogger<App> log, Settings settings, Shares shares)
+        public App(ILogger<App> log, Settings settings, IExcelWorkbookCreatorService excelWorkbookCreatorService)
         {
             Log = log;
             AppSettings = settings;
-            Shares = shares;
+            ExcelWorkbookCreatorService = excelWorkbookCreatorService;
         }
 
         public async Task RunAsync()
         {
-            // Get stocks data for all groups and create an Excel workbook for each.
+            // Get stocks data for all groups and create an Excel Workbook for each.
             List<string> outputFilePathOpened = new();
 
             foreach (var shareGroup in AppSettings.Groups.Where(g => g.Enabled))
@@ -38,7 +38,7 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                     outputFilePath = $"{outputFilePath}{DateTime.Now.Date:yyyy-MM-dd}";
                 }
 
-                var excelFileFullPath = await Shares.CreateWorkbookAsync(
+                var excelFileFullPath = await ExcelWorkbookCreatorService.CreateWorkbookAsync(
                     shareGroup.Model,
                     symbolsFullPath,
                     shareGroup.ApiUrl,

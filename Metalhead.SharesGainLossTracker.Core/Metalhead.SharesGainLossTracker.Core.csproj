@@ -7,16 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DataTableExtensions.cs" />
-    <Compile Remove="EnumerableExtensions.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="log4net.config" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="EPPlus" Version="6.2.0" />
+    <PackageReference Include="EPPlus" Version="6.2.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
     <PackageReference Include="Polly" Version="7.2.3" />
     <PackageReference Include="System.Net.Http.Json" Version="7.0.1" />

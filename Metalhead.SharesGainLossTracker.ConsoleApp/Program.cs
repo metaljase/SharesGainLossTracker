@@ -10,7 +10,9 @@ using System.Reflection;
 using System.Threading.Tasks;
 
 using Metalhead.SharesGainLossTracker.Core;
+using Metalhead.SharesGainLossTracker.Core.Helpers;
 using Metalhead.SharesGainLossTracker.Core.Models;
+using Metalhead.SharesGainLossTracker.Core.Services;
 using Serilog;
 
 namespace Metalhead.SharesGainLossTracker.ConsoleApp
@@ -59,7 +61,15 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                     services.AddSingleton<Settings>(settings);
                     services.AddSingleton<IProgress<ProgressLog>, Progress<ProgressLog>>();
                     services.AddSingleton<App>();
-                    services.AddSingleton<Shares>();
+                    services.AddSingleton<IExcelWorkbookCreatorService, ExcelWorkbookCreatorService>();
+                    services.AddSingleton<ISharesInputLoader, SharesInputLoaderCsv>();
+                    services.AddSingleton<IStocksDataService, StocksDataService>();
+                    services.AddSingleton<SharesInputLoaderService, SharesInputLoaderService>();
+                    services.AddSingleton<IFileSystemFileWrapper, FileSystemFileWrapper>();
+                    services.AddSingleton<IFileStreamFactory, FileStreamFactory>();
+                    services.AddSingleton<ISharesInputHelperWrapper, SharesInputHelperWrapper>();
+                    services.AddSingleton<ISharesOutputDataTableHelperWrapper, SharesOutputDataTableHelperWrapper>();
+                    services.AddSingleton<ISharesOutputHelperWrapper, SharesOutputHelperWrapper>();
 
                     foreach (var stockApiSource in stockApiSources)
                     {

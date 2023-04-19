@@ -31,9 +31,12 @@ namespace Metalhead.SharesGainLossTracker.Core
                 if (item.IsSuccessStatusCode)
                 {
                     var stock = await item.Content.ReadFromJsonAsync<MarketstackRoot>();
-                    if (stock is not null && stock.Data is not null && stock.Data.Length > 0)
+                    if (stock is not null && stock.Data is not null)
                     {
-                        stocks.Add(stock);
+                        if (stock.Data.Length > 0)
+                        {
+                            stocks.Add(stock);
+                        }
                     }
                     else
                     {
