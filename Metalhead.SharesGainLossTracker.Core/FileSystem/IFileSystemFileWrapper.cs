@@ -1,4 +1,4 @@
-﻿namespace Metalhead.SharesGainLossTracker.Core;
+﻿namespace Metalhead.SharesGainLossTracker.Core.FileSystem;
 
 public interface IFileSystemFileWrapper
 {

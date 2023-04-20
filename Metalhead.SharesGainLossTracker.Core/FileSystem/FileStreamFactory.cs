@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace Metalhead.SharesGainLossTracker.Core;
+namespace Metalhead.SharesGainLossTracker.Core.FileSystem;
 
 public class FileStreamFactory : IFileStreamFactory
 {

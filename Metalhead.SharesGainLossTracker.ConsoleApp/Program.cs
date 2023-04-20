@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 
 using Metalhead.SharesGainLossTracker.Core;
+using Metalhead.SharesGainLossTracker.Core.FileSystem;
 using Metalhead.SharesGainLossTracker.Core.Helpers;
 using Metalhead.SharesGainLossTracker.Core.Models;
 using Metalhead.SharesGainLossTracker.Core.Services;

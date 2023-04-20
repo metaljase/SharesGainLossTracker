@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Windows;
 
 using Metalhead.SharesGainLossTracker.Core;
+using Metalhead.SharesGainLossTracker.Core.FileSystem;
 using Metalhead.SharesGainLossTracker.Core.Helpers;
 using Metalhead.SharesGainLossTracker.Core.Models;
 using Metalhead.SharesGainLossTracker.Core.Services;

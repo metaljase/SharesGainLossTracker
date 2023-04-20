@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 
 using Metalhead.SharesGainLossTracker.Core.Models;
+using Metalhead.SharesGainLossTracker.Core.FileSystem;
 
 namespace Metalhead.SharesGainLossTracker.Core.Services;
 
