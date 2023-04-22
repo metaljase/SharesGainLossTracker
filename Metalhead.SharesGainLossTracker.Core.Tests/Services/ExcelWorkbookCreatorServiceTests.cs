@@ -2,13 +2,12 @@
 using System.Data;
 using System.Reflection;
 
+using Metalhead.SharesGainLossTracker.Core.FileSystem;
 using Metalhead.SharesGainLossTracker.Core.Helpers;
 using Metalhead.SharesGainLossTracker.Core.Models;
 using Metalhead.SharesGainLossTracker.Core.Services;
 using Moq;
-using Polly.Retry;
 using Xunit;
-using Metalhead.SharesGainLossTracker.Core.FileSystem;
 
 namespace Metalhead.SharesGainLossTracker.Core.Tests.Services;
 
@@ -19,6 +18,7 @@ public class ExcelWorkbookCreatorServiceTests
     private readonly Mock<IProgress<ProgressLog>> _mockProgress = new();
     private readonly Mock<IStocksDataService> _mockStocksDataService = new();
     private readonly Mock<ISharesInputLoader> _mockSharesInputLoader = new();
+    private readonly Mock<ISharesOutputService> _mockSharesOutputService = new();
     private readonly Mock<IFileStreamFactory> _mockFileStreamFactory = new();
     private readonly Mock<ISharesInputHelperWrapper> _mockSharesInputHelper = new();
     private readonly Mock<ISharesOutputDataTableHelperWrapper> _mockSharesOutputDataTableHelper = new();
@@ -28,11 +28,11 @@ public class ExcelWorkbookCreatorServiceTests
     {
         _mockProgress = new Mock<IProgress<ProgressLog>>();
 
-        _sut = new ExcelWorkbookCreatorService(_mockLogger.Object, _mockProgress.Object, _mockStocksDataService.Object, _mockSharesInputLoader.Object, _mockFileStreamFactory.Object, _mockSharesInputHelper.Object, _mockSharesOutputDataTableHelper.Object, _mockSharesOutputHelper.Object);
+        _sut = new ExcelWorkbookCreatorService(_mockLogger.Object, _mockProgress.Object, _mockStocksDataService.Object, _mockSharesInputLoader.Object, _mockSharesOutputService.Object, _mockFileStreamFactory.Object, _mockSharesInputHelper.Object, _mockSharesOutputDataTableHelper.Object, _mockSharesOutputHelper.Object);
     }
 
     [Fact]
-    public async Task CreateWorkbookAsync_ReturnsWorkbookPath_GivenValidInput()
+    public async Task CreateWorkbookAsync_CreatesWorkbookAndReturnsWorkbookPath_GivenValidInput()
     {
         // Arrange
         var sharesInputFileFullPath = "My Shares.csv";
@@ -43,37 +43,9 @@ public class ExcelWorkbookCreatorServiceTests
         var outputFilenamePrefix = "My Shares ";
         var appendPriceToStockName = true;
 
-        Mock<IEnumerable<IStock>> mockStockSources = new();
-        mockStockSources
-            .Setup(x => x.GetEnumerator())
-            .Returns(() => new List<IStock>
-            {
-                new Mock<IStock>().Object,
-                new Mock<IStock>().Object
-            }.GetEnumerator());
-
-        Mock<IStock> mockIStock = new();
-        _mockStocksDataService.Setup(x => x.GetStock(It.IsAny<string>())).Returns(mockIStock.Object).Verifiable();
-
-        _mockSharesInputLoader.Setup(x => x.CreateSharesInput(It.IsAny<string>())).Returns(new List<Share>()).Verifiable();
-
-        _mockStocksDataService.Setup(x => x.GetRetryPolicy(It.IsAny<int>())).Verifiable();
-
-        _mockStocksDataService
-            .Setup(x => x.FetchStocksDataAsync(It.IsAny<AsyncRetryPolicy>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<List<Share>>()))
-            .Verifiable();
-
-        mockIStock.Setup(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>())).Verifiable();
-
-        _mockStocksDataService.Setup(x => x.IsExpectedStocksDataMapped(It.IsAny<List<FlattenedStock>>(), It.IsAny<List<Share>>())).Verifiable();
-
-        _mockSharesInputHelper.Setup(x => x.AppendPurchasePriceToStockName(It.IsAny<List<Share>>())).Verifiable();
-
-        _mockSharesInputHelper.Setup(x => x.MakeStockNamesUnique(It.IsAny<List<Share>>())).Verifiable();
-
-        _mockSharesOutputHelper
-            .Setup(x => x.CreateSharesOutput(It.IsAny<List<Share>>(), It.IsAny<List<FlattenedStock>>()))
-            .Returns(MockData.CreateSharesOutput())
+        _mockSharesOutputService
+            .Setup(x => x.CreateSharesOutputAsync("IStockProxy", sharesInputFileFullPath, stocksApiUrl, apiDelayPerCallMillieseconds, orderByDateDescending, appendPriceToStockName))
+            .ReturnsAsync(MockData.CreateSharesOutput())
             .Verifiable();
 
         _mockSharesOutputDataTableHelper
@@ -109,30 +81,22 @@ public class ExcelWorkbookCreatorServiceTests
         Assert.NotNull(result);
         Assert.Equal(outputFullFilePath, result);
 
-        _mockStocksDataService.Verify(x => x.GetStock(It.IsAny<string>()), Times.Once);
-        _mockSharesInputLoader.Verify(x => x.CreateSharesInput(It.IsAny<string>()), Times.Once);
-        _mockStocksDataService.Verify(x => x.GetRetryPolicy(It.IsAny<int>()), Times.Once);
-        _mockStocksDataService.Verify(x => x.FetchStocksDataAsync(It.IsAny<AsyncRetryPolicy>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<List<Share>>()), Times.Once);
-        mockIStock.Verify(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>()), Times.Once);
-        _mockStocksDataService.Verify(x => x.IsExpectedStocksDataMapped(It.IsAny<List<FlattenedStock>>(), It.IsAny<List<Share>>()), Times.Once);
-        _mockSharesInputHelper.Verify(x => x.AppendPurchasePriceToStockName(It.IsAny<List<Share>>()), Times.Once);
-        _mockSharesInputHelper.Verify(x => x.MakeStockNamesUnique(It.IsAny<List<Share>>()), Times.Once);
-        _mockSharesOutputHelper.Verify(x => x.CreateSharesOutput(It.IsAny<List<Share>>(), It.IsAny<List<FlattenedStock>>()), Times.Once);
+        _mockSharesOutputService.Verify(x => x.CreateSharesOutputAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Once);
         _mockSharesOutputDataTableHelper.Verify(x => x.CreateGainLossPivotedDataTable(It.IsAny<List<ShareOutput>>(), "Gain/Loss"), Times.Once);
         _mockSharesOutputDataTableHelper.Verify(x => x.CreateAdjustedClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"), Times.Once);
         _mockFileStreamFactory.Verify(x => x.Create(It.IsAny<string>(), FileMode.CreateNew, FileAccess.Write), Times.Once);
     }
 
-    public static IEnumerable<object[]> IsExpectedStocksDataMappedExceptions =>
-        new List<object[]>
-        {
-            new object[] { new ArgumentNullException("flattenedStocks") },
-            new object[] { new ArgumentException("Failed to fetch any stocks data.", "flattenedStocks") },
-        };
+    public static IEnumerable<object[]> CreateInvalidGainLossPivotedDataTable =>
+       new List<object[]>
+       {
+            new object[] { new DataTable() },
+            new object[] { null }
+       };
 
     [Theory]
-    [MemberData(nameof(IsExpectedStocksDataMappedExceptions))]
-    public async Task CreateWorkbookAsync_DoesNotThrowArgumentNullExceptionOrArgumentException_GivenIsExpectedStocksDataMappedThrowsArgumentNullExceptionOrArgumentException(Exception exception)
+    [MemberData(nameof(CreateInvalidGainLossPivotedDataTable))]
+    public async Task CreateWorkbookAsync_SwallowsArgumentExceptionAndReturnsNull_GivenDataTablesContainNullDataTableOrNoRows(DataTable dataTable)
     {
         // Arrange
         var sharesInputFileFullPath = "My Shares.csv";
@@ -143,58 +107,15 @@ public class ExcelWorkbookCreatorServiceTests
         var outputFilenamePrefix = "My Shares ";
         var appendPriceToStockName = true;
 
-        Mock<IEnumerable<IStock>> mockStockSources = new();
-        mockStockSources
-            .Setup(x => x.GetEnumerator())
-            .Returns(() => new List<IStock>
-            {
-                new Mock<IStock>().Object,
-                new Mock<IStock>().Object
-            }.GetEnumerator());
-
-        Mock<IStock> mockIStock = new();
-        _mockStocksDataService.Setup(x => x.GetStock(It.IsAny<string>())).Returns(mockIStock.Object).Verifiable();
-
-        _mockSharesInputLoader.Setup(x => x.CreateSharesInput(It.IsAny<string>())).Returns(new List<Share>()).Verifiable();
-
-        _mockStocksDataService.Setup(x => x.GetRetryPolicy(It.IsAny<int>())).Verifiable();
-
-        _mockStocksDataService
-            .Setup(x => x.FetchStocksDataAsync(It.IsAny<AsyncRetryPolicy>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<List<Share>>()))
-            .Verifiable();
-
-        mockIStock.Setup(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>())).Verifiable();
-
-        _mockStocksDataService.Setup(x => x.IsExpectedStocksDataMapped(It.IsAny<List<FlattenedStock>>(), It.IsAny<List<Share>>()))
-            .Throws(exception)
-            .Verifiable();
-
-        _mockSharesInputHelper.Setup(x => x.AppendPurchasePriceToStockName(It.IsAny<List<Share>>())).Verifiable();
-
-        _mockSharesInputHelper.Setup(x => x.MakeStockNamesUnique(It.IsAny<List<Share>>())).Verifiable();
-
-        _mockSharesOutputHelper
-            .Setup(x => x.CreateSharesOutput(It.IsAny<List<Share>>(), It.IsAny<List<FlattenedStock>>()))
-            .Returns(MockData.CreateSharesOutput())
-            .Verifiable();
-
         _mockSharesOutputDataTableHelper
             .Setup(x => x.CreateGainLossPivotedDataTable(It.IsAny<List<ShareOutput>>(), "Gain/Loss"))
-            .Returns(MockData.CreateGainLossDataTable())
+            .Returns(dataTable)
             .Verifiable();
 
         _mockSharesOutputDataTableHelper
             .Setup(x => x.CreateAdjustedClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"))
             .Returns(MockData.CreateAdjustedCloseDataTable())
             .Verifiable();
-
-        var _mockMemoryStream = new Mock<MemoryStream>();
-        _mockMemoryStream.Setup(x => x.WriteTo(_mockMemoryStream.Object)).Verifiable();
-        string outputFullFilePath = string.Empty;
-        _mockFileStreamFactory
-            .Setup(x => x.Create(It.IsAny<string>(), FileMode.CreateNew, FileAccess.Write))
-            .Callback<string, FileMode, FileAccess>((path, mode, access) => outputFullFilePath = path)
-            .Returns(_mockMemoryStream.Object);
 
         // Act
         var result = await _sut.CreateWorkbookAsync(
@@ -208,20 +129,13 @@ public class ExcelWorkbookCreatorServiceTests
             appendPriceToStockName);
 
         // Assert
-        _mockStocksDataService.Verify(x => x.GetStock(It.IsAny<string>()), Times.Once);
-        _mockSharesInputLoader.Verify(x => x.CreateSharesInput(It.IsAny<string>()), Times.Once);
-        _mockStocksDataService.Verify(x => x.GetRetryPolicy(It.IsAny<int>()), Times.Once);
-        _mockStocksDataService.Verify(x => x.FetchStocksDataAsync(It.IsAny<AsyncRetryPolicy>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<List<Share>>()), Times.Once);
-        mockIStock.Verify(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>()), Times.Once);
-        _mockStocksDataService.Verify(x => x.IsExpectedStocksDataMapped(It.IsAny<List<FlattenedStock>>(), It.IsAny<List<Share>>()), Times.Once);
-        _mockLogger.VerifyLogging(LogLevel.Error, $"Failed to fetch any stocks data for input file: {outputFullFilePath}");
-        _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.Equals($"Failed to fetch any stocks data for input file: {sharesInputFileFullPath}"))), Times.Once);
-        _mockSharesInputHelper.Verify(x => x.AppendPurchasePriceToStockName(It.IsAny<List<Share>>()), Times.Never);
-        _mockSharesInputHelper.Verify(x => x.MakeStockNamesUnique(It.IsAny<List<Share>>()), Times.Never);
-        _mockSharesOutputHelper.Verify(x => x.CreateSharesOutput(It.IsAny<List<Share>>(), It.IsAny<List<FlattenedStock>>()), Times.Never);
-        _mockSharesOutputDataTableHelper.Verify(x => x.CreateGainLossPivotedDataTable(It.IsAny<List<ShareOutput>>(), "Gain/Loss"), Times.Never);
-        _mockSharesOutputDataTableHelper.Verify(x => x.CreateAdjustedClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"), Times.Never);
-        _mockFileStreamFactory.Verify(x => x.Create(It.IsAny<string>(), FileMode.CreateNew, FileAccess.Write), Times.Never);
+        Assert.Null(result);
+
+        _mockSharesOutputService.Verify(x => x.CreateSharesOutputAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Once);
+        _mockSharesOutputDataTableHelper.Verify(x => x.CreateGainLossPivotedDataTable(It.IsAny<List<ShareOutput>>(), "Gain/Loss"), Times.Once);
+        _mockSharesOutputDataTableHelper.Verify(x => x.CreateAdjustedClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"), Times.Once);
+        _mockLogger.VerifyLogging(LogLevel.Error, "Error creating Excel Workbook due to no data.");
+        _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.Equals("Error creating Excel Workbook due to no data."))), Times.Once);
     }
 
     [Fact]
@@ -246,7 +160,7 @@ public class ExcelWorkbookCreatorServiceTests
     }
 
     [Fact]
-    public async Task CreateWorkbookAsMemoryStreamAsync_ThrowsArgumentNullExceptionNullException_GivenNullDataTable()
+    public async Task CreateWorkbookAsMemoryStreamAsync_ThrowsArgumentNullException_GivenNullDataTable()
     {
         // Arrange
         List<DataTable> dataTables = null;
@@ -266,7 +180,29 @@ public class ExcelWorkbookCreatorServiceTests
     }
 
     [Fact]
-    public async Task CreateWorkbookAsMemoryStreamAsync_ThrowsInvalidOperationException_GivenDataTableWithNoRows()
+    public async Task CreateWorkbookAsMemoryStreamAsync_ThrowsArgumentException_GivenAnyDataTableIsNull()
+    {
+        // Arrange
+        List<DataTable> dataTables = MockData.CreateGainLossDataTableAndAdjustedCloseDataTable();
+        dataTables.Add(null);
+        var workbookTitle = "Shares";
+
+        // Act and Assert
+        var methodInfo = typeof(ExcelWorkbookCreatorService).GetMethod("CreateWorkbookAsMemoryStreamAsync", BindingFlags.Static | BindingFlags.Public);
+        Assert.NotNull(methodInfo);
+        var task = Assert.ThrowsAsync<ArgumentException>(() => (Task<MemoryStream>?)methodInfo.Invoke(_sut, new object[] { dataTables, workbookTitle }));
+        ArgumentException? result = null;
+        if (task != null)
+        {
+            result = await task!;
+        }
+        Assert.IsType<ArgumentException>(result);
+        Assert.Equal(nameof(dataTables), result.ParamName);
+        Assert.Equal($"Cannot create MemoryStream containing Excel Workbook because one or more DataTables are null. (Parameter '{nameof(dataTables)}')", result.Message);
+    }
+
+    [Fact]
+    public async Task CreateWorkbookAsMemoryStreamAsync_ThrowsInvalidOperationException_GivenAnyDataTableWithNoRows()
     {
         // Arrange
         List<DataTable> dataTables = new() { new DataTable(), new DataTable() };

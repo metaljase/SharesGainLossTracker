@@ -43,6 +43,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                     services.AddSingleton<ISharesInputLoader, SharesInputLoaderCsv>();
                     services.AddSingleton<IStocksDataService, StocksDataService>();
                     services.AddSingleton<SharesInputLoaderService, SharesInputLoaderService>();
+                    services.AddSingleton<ISharesOutputService, SharesOutputService>();
                     services.AddSingleton<IFileSystemFileWrapper, FileSystemFileWrapper>();
                     services.AddSingleton<IFileStreamFactory, FileStreamFactory>();
                     services.AddSingleton<ISharesInputHelperWrapper, SharesInputHelperWrapper>();
