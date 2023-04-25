@@ -42,6 +42,11 @@ public class ExcelWorkbookCreatorService : IExcelWorkbookCreatorService
     {
         var sharesOutput = await SharesOutputService.CreateSharesOutputAsync(model, sharesInputFileFullPath, stocksApiUrl, apiDelayPerCallMillieseconds, orderByDateDescending, appendPriceToStockName);
 
+        if (sharesOutput is null)
+        {
+            return null;
+        }
+
         // Create a DataTable containing the gain/loss, and a DataTable containing the adjusted close price.
         List<DataTable> dataTables = new()
         {

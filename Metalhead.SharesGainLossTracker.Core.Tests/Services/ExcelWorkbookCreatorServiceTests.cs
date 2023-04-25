@@ -90,13 +90,15 @@ public class ExcelWorkbookCreatorServiceTests
     public static IEnumerable<object[]> CreateInvalidGainLossPivotedDataTable =>
        new List<object[]>
        {
-            new object[] { new DataTable() },
-            new object[] { null }
+            new object[] { null, MockData.CreateAdjustedCloseDataTable() },
+            new object[] { new DataTable(), MockData.CreateAdjustedCloseDataTable() },
+            new object[] { MockData.CreateGainLossDataTable(), null },
+            new object[] { MockData.CreateGainLossDataTable(), new DataTable() }            
        };
 
     [Theory]
     [MemberData(nameof(CreateInvalidGainLossPivotedDataTable))]
-    public async Task CreateWorkbookAsync_SwallowsArgumentExceptionAndReturnsNull_GivenDataTablesContainNullDataTableOrNoRows(DataTable dataTable)
+    public async Task CreateWorkbookAsync_SwallowsArgumentExceptionAndReturnsNull_GivenDataTablesContainNullDataTableOrNoRows(DataTable gainLossPivotedDataTable, DataTable adjustedClosePivotedDataTable)
     {
         // Arrange
         var sharesInputFileFullPath = "My Shares.csv";
@@ -107,14 +109,19 @@ public class ExcelWorkbookCreatorServiceTests
         var outputFilenamePrefix = "My Shares ";
         var appendPriceToStockName = true;
 
+        _mockSharesOutputService
+            .Setup(x => x.CreateSharesOutputAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()))
+            .ReturnsAsync(MockData.CreateSharesOutput())
+            .Verifiable();
+
         _mockSharesOutputDataTableHelper
             .Setup(x => x.CreateGainLossPivotedDataTable(It.IsAny<List<ShareOutput>>(), "Gain/Loss"))
-            .Returns(dataTable)
+            .Returns(gainLossPivotedDataTable)
             .Verifiable();
 
         _mockSharesOutputDataTableHelper
             .Setup(x => x.CreateAdjustedClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"))
-            .Returns(MockData.CreateAdjustedCloseDataTable())
+            .Returns(adjustedClosePivotedDataTable)
             .Verifiable();
 
         // Act

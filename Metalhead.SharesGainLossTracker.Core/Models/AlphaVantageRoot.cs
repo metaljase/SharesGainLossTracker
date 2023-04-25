@@ -10,5 +10,11 @@ namespace Metalhead.SharesGainLossTracker.Core.Models
 
         [JsonPropertyName("Time Series (Daily)")]
         public Dictionary<string, AlphaVantageData> Data {get; set;}
+
+        [JsonPropertyName("Error Message")]
+        public string ErrorMessage { get; set; }
+
+        [JsonPropertyName("Note")]
+        public string Note { get; set; }
     }
 }

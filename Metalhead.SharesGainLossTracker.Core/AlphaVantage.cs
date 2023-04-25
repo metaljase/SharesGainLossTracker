@@ -25,6 +25,8 @@ namespace Metalhead.SharesGainLossTracker.Core
         {
             List<AlphaVantageRoot> stocks = new();
             var hadDeserializingErrors = false;
+            var hadRateLimitError = false;
+            var hadInvalidApiCall = false;
 
             foreach (var item in httpResponseMessages)
             {
@@ -37,15 +39,36 @@ namespace Metalhead.SharesGainLossTracker.Core
                     }
                     else
                     {
-                        hadDeserializingErrors = true;
+                        if (stock is not null && stock.Note is not null && stock.Note.EndsWith("if you would like to target a higher API call frequency."))
+                        {
+                            hadRateLimitError = true;
+                        }
+                        else if (stock is not null && stock.ErrorMessage is not null && stock.ErrorMessage.StartsWith("Invalid API call."))
+                        {
+                            hadInvalidApiCall = true;
+                        }
+                        else
+                        {
+                            hadDeserializingErrors = true;
+                        }
                     }
                 }
             }
 
+            if (hadRateLimitError)
+            {
+                Log.LogError("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilleseconds setting.");
+                Progress.Report(new ProgressLog(MessageImportance.Bad, "Rate limit error from stocks API. Try increasing ApiDelayPerCallMilleseconds setting."));
+            }
+            if (hadInvalidApiCall)
+            {
+                Log.LogError("Invalid API call error from stocks API. Possible incorrect stock symbol in shares input file.");
+                Progress.Report(new ProgressLog(MessageImportance.Bad, "Invalid API call error from stocks API. Possible incorrect stock symbol in shares input file."));
+            }
             if (hadDeserializingErrors)
             {
-                Log.LogError("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.");
-                Progress.Report(new ProgressLog(MessageImportance.Bad, "Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds settings."));
+                Log.LogError("Error deserializing data from stocks API.");
+                Progress.Report(new ProgressLog(MessageImportance.Bad, "Received unexpected data from stocks API."));
             }
 
             return GetFlattenedStocks(stocks);
