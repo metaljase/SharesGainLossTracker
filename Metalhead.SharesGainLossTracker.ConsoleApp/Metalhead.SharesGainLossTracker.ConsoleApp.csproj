@@ -1,8 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PublishTrimmed>true</PublishTrimmed>
+    <PublishSingleFile>true</PublishSingleFile>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <UserSecretsId>5d5dac08-f3c7-46fa-bdf1-5fc675286633</UserSecretsId>
   </PropertyGroup>
