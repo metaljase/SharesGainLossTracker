@@ -59,34 +59,42 @@ jobs:
           dotnet-version: 6.0.x
 
       - name: Create ClickOnce ${{ env.ConsoleApp_NS }}.exe (win-x64 self-contained)
-        run: dotnet publish ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
+        run: dotnet publish ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false
       - name: Rename ${{ env.ConsoleApp_NS }}.exe to ${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/publish/${{ env.ConsoleApp_NS }}.exe ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/publish/${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.exe
-  
+      - name: Zip ${{ env.ConsoleApp_NS }} win-x64 self-contained published files.
+        run: zip -r ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/publish/${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip *
+
       - name: Create ClickOnce ${{ env.ConsoleApp_NS }}.exe (win-x86 self-contained)
-        run: dotnet publish ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj -c Release -r win-x86 --self-contained -p:PublishSingleFile=true
+        run: dotnet publish ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj -c Release -r win-x86 --self-contained -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false
       - name: Rename ${{ env.ConsoleApp_NS }}.exe to ${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/publish/${{ env.ConsoleApp_NS }}.exe ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/publish/${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.exe
-  
+      - name: Zip ${{ env.ConsoleApp_NS }} win-x86 self-contained published files.
+        run: zip -r ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/publish/${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip *
+
       - name: Create ClickOnce ${{ env.ConsoleApp_NS }}.exe (win-x64)
-        run: dotnet publish ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -o ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish
+        run: dotnet publish ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish
       - name: Rename ${{ env.ConsoleApp_NS }}.exe to ${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/${{ env.ConsoleApp_NS }}.exe ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
+      - name: Zip ${{ env.ConsoleApp_NS }} win-x64 published files.
+        run: zip -r ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip *
 
       - name: Create ClickOnce ${{ env.ConsoleApp_NS }}.exe (win-x86)
-        run: dotnet publish ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj -c Release -r win-x86 --no-self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -o ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish
+        run: dotnet publish ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj -c Release -r win-x86 --no-self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish
       - name: Rename ${{ env.ConsoleApp_NS }}.exe to ${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/${{ env.ConsoleApp_NS }}.exe ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
-
+      - name: Zip ${{ env.ConsoleApp_NS }} win-x86 published files.
+        run: zip -r ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip *
+  
       - name: Upload console app publish files
         uses: actions/upload-artifact@v3
         with:
           name: ConsoleAppFiles
           path: |
-            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/publish/${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.exe
-            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/publish/${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.exe
-            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
-            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
+            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/publish/${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
+            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/publish/${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
+            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
+            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
           retention-days: 1
 
   build-wpf-app:
@@ -137,34 +145,42 @@ jobs:
           dotnet-version: 6.0.x
 
       - name: Create ClickOnce ${{ env.WpfApp_NS }}.exe (win-x64 self-contained)
-        run: dotnet publish ${{ env.WpfApp_NS }}/${{ env.WpfApp_NS }}.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
+        run: dotnet publish ${{ env.WpfApp_NS }}/${{ env.WpfApp_NS }}.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false
       - name: Rename ${{ env.WpfApp_NS }}.exe to ${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/publish/${{ env.WpfApp_NS }}.exe ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/publish/${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.exe
-  
+      - name: Zip ${{ env.WpfApp_NS }} win-x64 self-contained published files.
+        run: zip -r ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/publish/${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip *
+
       - name: Create ClickOnce ${{ env.WpfApp_NS }}.exe (win-x86 self-contained)
-        run: dotnet publish ${{ env.WpfApp_NS }}/${{ env.WpfApp_NS }}.csproj -c Release -r win-x86 --self-contained -p:PublishSingleFile=true
+        run: dotnet publish ${{ env.WpfApp_NS }}/${{ env.WpfApp_NS }}.csproj -c Release -r win-x86 --self-contained -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false
       - name: Rename ${{ env.WpfApp_NS }}.exe to ${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/publish/${{ env.WpfApp_NS }}.exe ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/publish/${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.exe
-  
+      - name: Zip ${{ env.WpfApp_NS }} win-x86 self-contained published files.
+        run: zip -r ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/publish/${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip *
+
       - name: Create ClickOnce ${{ env.WpfApp_NS }}.exe (win-x64)
-        run: dotnet publish ${{ env.WpfApp_NS }}/${{ env.WpfApp_NS }}.csproj -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -o ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/non-self/publish
+        run: dotnet publish ${{ env.WpfApp_NS }}/${{ env.WpfApp_NS }}.csproj -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/non-self/publish
       - name: Rename ${{ env.WpfApp_NS }}.exe to ${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/non-self/publish/${{ env.WpfApp_NS }}.exe ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/non-self/publish/${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
+      - name: Zip ${{ env.WpfApp_NS }} win-x64 published files.
+        run: zip -r ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/non-self/publish/${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip *
 
       - name: Create ClickOnce ${{ env.WpfApp_NS }}.exe (win-x86)
-        run: dotnet publish ${{ env.WpfApp_NS }}/${{ env.WpfApp_NS }}.csproj -c Release -r win-x86 --no-self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -o ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/non-self/publish
+        run: dotnet publish ${{ env.WpfApp_NS }}/${{ env.WpfApp_NS }}.csproj -c Release -r win-x86 --no-self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/non-self/publish
       - name: Rename ${{ env.WpfApp_NS }}.exe to ${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/non-self/publish/${{ env.WpfApp_NS }}.exe ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/non-self/publish/${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
+      - name: Zip ${{ env.WpfApp_NS }} win-x86 published files.
+        run: zip -r ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/non-self/publish/${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip *
 
       - name: Upload WPF app publish files
         uses: actions/upload-artifact@v3
         with:
           name: WpfAppFiles
           path: |
-            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/publish/${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.exe
-            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/publish/${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.exe
-            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/non-self/publish/${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
-            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/non-self/publish/${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
+            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/publish/${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
+            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/publish/${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
+            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/non-self/publish/${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
+            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/non-self/publish/${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
           retention-days: 1
 
   release:
@@ -189,15 +205,15 @@ jobs:
     - name: Create GitHub release (draft)
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          console-app-files/win-x64/publish/${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.exe
-          console-app-files/win-x86/publish/${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.exe
-          console-app-files/win-x64/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
-          console-app-files/win-x86/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe          
-          wpf-app-files/win-x64/publish/${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.exe
-          wpf-app-files/win-x86/publish/${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.exe
-          wpf-app-files/win-x64/non-self/publish/${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
-          wpf-app-files/win-x86/non-self/publish/${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
+        files: |          
+          console-app-files/win-x64/publish/${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
+          console-app-files/win-x86/publish/${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
+          console-app-files/win-x64/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
+          console-app-files/win-x86/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip          
+          wpf-app-files/win-x64/publish/${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
+          wpf-app-files/win-x86/publish/${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
+          wpf-app-files/win-x64/non-self/publish/${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
+          wpf-app-files/win-x86/non-self/publish/${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
         tag_name: ${{ github.ref_name }}
         draft: true
       env:
