@@ -91,10 +91,10 @@ jobs:
         with:
           name: ConsoleAppFiles
           path: |
-            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/publish/${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
-            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/publish/${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
-            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
-            ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
+            ${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
+            ${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
+            ${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
+            ${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
           retention-days: 1
 
   build-wpf-app:
@@ -177,10 +177,10 @@ jobs:
         with:
           name: WpfAppFiles
           path: |
-            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/publish/${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
-            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/publish/${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
-            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x64/non-self/publish/${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
-            ${{ env.WpfApp_NS }}/bin/Release/${{ env.WpfApp_TF }}/win-x86/non-self/publish/${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
+            ${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
+            ${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
+            ${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
+            ${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
           retention-days: 1
 
   release:
@@ -206,14 +206,14 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |          
-          console-app-files/win-x64/publish/${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
-          console-app-files/win-x86/publish/${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
-          console-app-files/win-x64/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
-          console-app-files/win-x86/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip          
-          wpf-app-files/win-x64/publish/${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
-          wpf-app-files/win-x86/publish/${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
-          wpf-app-files/win-x64/non-self/publish/${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
-          wpf-app-files/win-x86/non-self/publish/${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
+          console-app-files/${{ env.ConsoleApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
+          console-app-files/${{ env.ConsoleApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
+          console-app-files/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
+          console-app-files/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip          
+          wpf-app-files/${{ env.WpfApp_EXE }}-win-x64-with-runtime-${{ github.ref_name }}.zip
+          wpf-app-files/${{ env.WpfApp_EXE }}-win-x86-with-runtime-${{ github.ref_name }}.zip
+          wpf-app-files/${{ env.WpfApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
+          wpf-app-files/${{ env.WpfApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
         tag_name: ${{ github.ref_name }}
         draft: true
       env:
