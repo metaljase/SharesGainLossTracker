@@ -11,13 +11,26 @@ SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Market
 You will need to sign up to a free (or paid) tier, which will give you a key to access their API.  This key needs to be inserted into the `appsettings` file.
 
 # Setup instructions
-SharesGainLossTracker was initially written as a POC console app for my dad, therefore I haven't bothered creating any GitHub Actions, workflows, or binaries to download.  As a result, to run SharesGainLossTracker, you'll need to use Visual Studio 2022 (or a compatible alternative) to compile and run the app.
+1) Download the latest version of the console app or WPF app for your Windows PC from [Releases](https://github.com/metaljase/SharesGainLossTracker/releases), then extract the files from the zip file.
+
+2) Perform the steps in the [configuration instructions section](https://github.com/metaljase/SharesGainLossTracker#configuration-instructions).
+
+3) Run the executable file (.exe) extracted from the zip file. 
+
+OR
 
 1) Clone the SharesGainLossTracker repository.
 
 2) Open the .NET solution in Visual Studio 2022 (or a compatible alternative).
 
-3) Open the `appsettings.json` file (or `appsettings.Development.json` if running in development mode) and edit the values:
+3) Perform the steps in the [configuration instructions section](https://github.com/metaljase/SharesGainLossTracker#configuration-instructions).
+
+4) Set either `SharesGainLossTracker.ConsoleApp` or `SharesGainLossTracker.WpfApp` as the startup project.
+
+5) Build the solution and run!
+
+# Configuration instructions
+Open the `appsettings.json` file (or `appsettings.Development.json` if running in development mode) and edit the values:
 
 | Setting                              | Description   |
 | -------------------------------------|:---------------
@@ -52,11 +65,6 @@ BP.LON,B.P. plc,200.95
 BAG.LON,Barr (AG),537.65
 CARD.LON,Card Factory plc,140.19
 ```
-
-4) Set either `SharesGainLossTracker.ConsoleApp` or `SharesGainLossTracker.WpfApp` as the startup project.
-
-5) Build the solution and run!
-
 
 # Supporting other 3rd party stocks APIs
 Support can be added by writing additional classes that implement the `SharesGainLossTracker.Core.Models.IStock` interface.
