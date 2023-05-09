@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,17 +22,19 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
     {
         public ILogger<MainWindow> Log { get; }
         public Settings AppSettings { get; }
+        private IConfiguration Configuration { get; }
         public IProgress<ProgressLog> Progress { get; }
         public IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; }
         public bool AutoScroll { get; set; } = true;
         public bool CreatedExcelFile { get; set; }
 
-        public MainWindow(ILogger<MainWindow> log, Settings settings, IProgress<ProgressLog> progress, IExcelWorkbookCreatorService excelWorkbookCreatorService)
+        public MainWindow(ILogger<MainWindow> log, IConfiguration configuration, IProgress<ProgressLog> progress, IExcelWorkbookCreatorService excelWorkbookCreatorService)
         {
             Log = log;
-            AppSettings = settings;
+            Configuration = configuration;
             Progress = (Progress<ProgressLog>)progress;
             ExcelWorkbookCreatorService = excelWorkbookCreatorService;
+            AppSettings = configuration.GetSection("sharesSettings").Get<Settings>();
 
             InitializeComponent();
             ((Progress<ProgressLog>)Progress).ProgressChanged += ProgressLog;

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,13 +15,15 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
     {
         public ILogger<App> Log { get; }
         public Settings AppSettings { get; }
+        private IConfiguration Configuration { get; }
         public IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; }
 
-        public App(ILogger<App> log, Settings settings, IExcelWorkbookCreatorService excelWorkbookCreatorService)
+        public App(ILogger<App> log, IConfiguration configuration, IExcelWorkbookCreatorService excelWorkbookCreatorService)
         {
             Log = log;
-            AppSettings = settings;
+            Configuration = configuration;
             ExcelWorkbookCreatorService = excelWorkbookCreatorService;
+            AppSettings = configuration.GetSection("sharesSettings").Get<Settings>();
         }
 
         public async Task RunAsync()

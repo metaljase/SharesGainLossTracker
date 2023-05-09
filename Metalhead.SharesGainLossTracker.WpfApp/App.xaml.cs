@@ -25,18 +25,27 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
 
         public App()
         {
-            var configuration = GetConfiguration();
-            var settings = configuration.GetSection("sharesSettings").Get<Settings>();
+            string[] args = Environment.GetCommandLineArgs();
 
             var stockApiSources = Assembly.Load("Metalhead.SharesGainLossTracker.Core")
                 .GetTypes().Where(type => typeof(IStock).IsAssignableFrom(type) && !type.IsInterface);
 
             Host = Microsoft.Extensions.Hosting.Host
-                .CreateDefaultBuilder()
+                .CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration(hostConfig =>
+                {
+                    hostConfig.SetBasePath(Directory.GetCurrentDirectory());
+                    hostConfig.AddCommandLine(args);
+                    hostConfig.AddEnvironmentVariables(prefix: "DOTNET_");
+                })
+                .ConfigureAppConfiguration((hostingContext, hostConfig) =>
+                {
+                    hostConfig.AddConfiguration(GetConfiguration(hostingContext, hostConfig));
+                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddHttpClient();
-                    services.AddSingleton(settings);
+                    services.AddSingleton<IConfiguration>(hostContext.Configuration);
                     services.AddSingleton<IProgress<ProgressLog>, Progress<ProgressLog>>();
                     services.AddSingleton<MainWindow>();
                     services.AddSingleton<IExcelWorkbookCreatorService, ExcelWorkbookCreatorService>();
@@ -59,17 +68,19 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
                 .Build();
         }
 
-        private static IConfigurationRoot GetConfiguration()
+        private static IConfigurationRoot GetConfiguration(HostBuilderContext hostingContext, IConfigurationBuilder builder)
         {
-            var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
             // Load configuration and settings.
-            var builder = new ConfigurationBuilder()
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            builder
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", false, true)
-                .AddJsonFile($"appsettings.{environmentName}.json", true, true)
-                .AddUserSecrets(Assembly.GetExecutingAssembly(), true)
-                .AddEnvironmentVariables();
+                .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", true, true);
+
+            if (hostingContext.HostingEnvironment.IsDevelopment())
+            {
+                builder.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
+            }
 
             // WARNING: When overriding appsettings.json with environment settings, be careful with arrays.  Different
             // amounts of elements in arrays will be mixed into appsettings.json, i.e. not wiped over and rewritten.
@@ -136,7 +147,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
 
             try
             {
-                ValidateSettings(Host.Services.GetRequiredService<Settings>());
+                ValidateSettings(Host.Services.GetRequiredService<IConfiguration>().GetSection("sharesSettings").Get<Settings>());
                 Host.Services.GetRequiredService<MainWindow>().Show();
 
                 base.OnStartup(e);

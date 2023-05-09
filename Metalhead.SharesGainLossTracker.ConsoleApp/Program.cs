@@ -20,16 +20,16 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
 {
     public class Program
     {
-        static async Task Main()
+        static async Task Main(string[] args)
         {
-            using IHost host = CreateHostBuilder().Build();
+            using IHost host = CreateHostBuilder(args).Build();
             using var serviceScope = host.Services.CreateScope();
 
             var services = serviceScope.ServiceProvider;
 
             try
             {
-                ValidateSettings(host.Services.GetRequiredService<Settings>());
+                ValidateSettings(host.Services.GetRequiredService<IConfiguration>().GetSection("sharesSettings").Get<Settings>());
                 await services.GetRequiredService<App>().RunAsync();
             }
             catch (Exception ex)
@@ -45,21 +45,28 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
             Console.ReadKey();
         }
 
-        private static IHostBuilder CreateHostBuilder()
+        private static IHostBuilder CreateHostBuilder(string[] args)
         {
-            var configuration = GetConfiguration();
-            var settings = configuration.GetSection("sharesSettings").Get<Settings>();
-
             var stockApiSources = Assembly.Load("Metalhead.SharesGainLossTracker.Core")
                 .GetTypes().Where(type => typeof(IStock).IsAssignableFrom(type) && !type.IsInterface);
 
             return Host
-                .CreateDefaultBuilder()
-                .ConfigureServices((_, services) =>
+                .CreateDefaultBuilder(args)
+                .ConfigureHostConfiguration(hostConfig =>
+                {
+                    hostConfig.SetBasePath(Directory.GetCurrentDirectory());
+                    hostConfig.AddCommandLine(args);
+                    hostConfig.AddEnvironmentVariables(prefix: "DOTNET_");                    
+                })
+                .ConfigureAppConfiguration((hostingContext, hostConfig) =>
+                {
+                    hostConfig.AddConfiguration(GetConfiguration(hostingContext, hostConfig));
+                })
+                .ConfigureServices((hostContext, services) =>
                 {
                     services.AddHttpClient();
                     services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
-                    services.AddSingleton<Settings>(settings);
+                    services.AddSingleton<IConfiguration>(hostContext.Configuration);
                     services.AddSingleton<IProgress<ProgressLog>, Progress<ProgressLog>>();
                     services.AddSingleton<App>();
                     services.AddSingleton<IExcelWorkbookCreatorService, ExcelWorkbookCreatorService>();
@@ -81,17 +88,18 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                 .UseSerilog();
         }
 
-        private static IConfigurationRoot GetConfiguration()
+        private static IConfigurationRoot GetConfiguration(HostBuilderContext hostingContext, IConfigurationBuilder builder)
         {
-            var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-
             // Load configuration and settings.
-            var builder = new ConfigurationBuilder()
+            builder
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", false, true)
-                .AddJsonFile($"appsettings.{environmentName}.json", true, true)
-                .AddUserSecrets(Assembly.GetExecutingAssembly(), true)
-                .AddEnvironmentVariables();
+                .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", true, true);
+
+            if (hostingContext.HostingEnvironment.IsDevelopment())
+            {
+                builder.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
+            }
 
             // WARNING: When overriding appsettings.json with environment settings, be careful with arrays.  Different
             // amounts of elements in arrays will be mixed into appsettings.json, i.e. not wiped over and rewritten.
