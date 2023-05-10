@@ -44,7 +44,7 @@ Open the `appsettings.json` file (or `appsettings.Development.json` if running i
 | SymbolsFullPath                      | Path and filename of the CSV file containing shares and purchase prices to be tracked.
 | ApiUrl                               | URL of 3rd party stocks API.  Replace `<API KEY>` with your API key.
 | ApiDelayPerCallMillieseconds         | Delay between API calls to keep within rate limit. One API call per stock.
-| OrderByDateDescending                | `true` or `false` sets whether to sort dates in Excel file in ascending or discending order.
+| OrderByDateDescending                | `true` or `false` sets whether to sort dates in Excel file in ascending or descending order.
 
 Below are example CSV files that should be referenced in `appsettings.json` against `SymbolsFullPath`.  Delimited values are: Stock symbol, Excel column name, Share purchase price.  Note: Stock symbols can differ between Marketstack and Alpha Vantage.
 
