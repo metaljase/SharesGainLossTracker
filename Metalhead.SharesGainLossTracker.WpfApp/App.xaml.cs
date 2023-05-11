@@ -21,7 +21,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
     /// </summary>
     public partial class App : Application
     {
-        public IHost Host { get; }
+        private IHost Host { get; }
 
         public App()
         {

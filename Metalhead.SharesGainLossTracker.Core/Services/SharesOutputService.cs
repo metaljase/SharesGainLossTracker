@@ -11,12 +11,12 @@ namespace Metalhead.SharesGainLossTracker.Core.Services;
 
 public class SharesOutputService : ISharesOutputService
 {
-    public ILogger<SharesOutputService> Log { get; }
-    public IProgress<ProgressLog> Progress { get; }
-    public IStocksDataService StocksDataService { get; }
-    public ISharesInputLoader ShareInputLoader { get; }
-    public ISharesInputHelperWrapper SharesInputHelper { get; }
-    public ISharesOutputHelperWrapper SharesOutputHelper { get; }
+    private ILogger<SharesOutputService> Log { get; }
+    private IProgress<ProgressLog> Progress { get; }
+    private IStocksDataService StocksDataService { get; }
+    private ISharesInputLoader ShareInputLoader { get; }
+    private ISharesInputHelperWrapper SharesInputHelper { get; }
+    private ISharesOutputHelperWrapper SharesOutputHelper { get; }
 
     public SharesOutputService(ILogger<SharesOutputService> log, IProgress<ProgressLog> progress, IStocksDataService stocksDataService, ISharesInputLoader shareInputLoader, ISharesInputHelperWrapper sharesInputHelperWrapper, ISharesOutputHelperWrapper sharesOutputHelperWrapper)
     {

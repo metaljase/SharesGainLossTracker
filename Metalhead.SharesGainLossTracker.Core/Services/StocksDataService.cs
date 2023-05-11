@@ -14,11 +14,11 @@ namespace Metalhead.SharesGainLossTracker.Core.Services;
 
 public class StocksDataService : IStocksDataService
 {
-    public ILogger<StocksDataService> Log { get; }
-    public IProgress<ProgressLog> Progress { get; }
-    public HttpClient HttpClient { get; }
-    public IEnumerable<IStock> IStocks { get; }
-    public ISharesInputHelperWrapper SharesInputHelperWrapper { get; }
+    private ILogger<StocksDataService> Log { get; }
+    private IProgress<ProgressLog> Progress { get; }
+    private HttpClient HttpClient { get; }
+    private IEnumerable<IStock> IStocks { get; }
+    private ISharesInputHelperWrapper SharesInputHelperWrapper { get; }
 
     public StocksDataService(ILogger<StocksDataService> log, IProgress<ProgressLog> progress, HttpClient httpClient, IEnumerable<IStock> iStocks, ISharesInputHelperWrapper sharesInputHelperWrapper)
     {

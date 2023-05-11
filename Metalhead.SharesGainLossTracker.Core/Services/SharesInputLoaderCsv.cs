@@ -11,8 +11,8 @@ namespace Metalhead.SharesGainLossTracker.Core.Services;
 
 public class SharesInputLoaderCsv : ISharesInputLoader
 {
-    public ILogger<SharesInputLoaderCsv> Log { get; }
-    public IProgress<ProgressLog> Progress { get; }
+    private ILogger<SharesInputLoaderCsv> Log { get; }
+    private IProgress<ProgressLog> Progress { get; }
     private IFileSystemFileWrapper FileSystemFileWrapper { get; }
 
     public SharesInputLoaderCsv(ILogger<SharesInputLoaderCsv> log, IProgress<ProgressLog> progress, IFileSystemFileWrapper fileSystemFileWrapper)

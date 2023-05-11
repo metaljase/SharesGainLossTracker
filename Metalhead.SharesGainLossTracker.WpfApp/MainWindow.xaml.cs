@@ -20,18 +20,16 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        public ILogger<MainWindow> Log { get; }
-        public Settings AppSettings { get; }
-        private IConfiguration Configuration { get; }
-        public IProgress<ProgressLog> Progress { get; }
-        public IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; }
-        public bool AutoScroll { get; set; } = true;
-        public bool CreatedExcelFile { get; set; }
+        private ILogger<MainWindow> Log { get; }
+        private Settings AppSettings { get; }
+        private IProgress<ProgressLog> Progress { get; }
+        private IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; }
+        private bool AutoScroll { get; set; } = true;
+        private bool CreatedExcelFile { get; set; }
 
         public MainWindow(ILogger<MainWindow> log, IConfiguration configuration, IProgress<ProgressLog> progress, IExcelWorkbookCreatorService excelWorkbookCreatorService)
         {
             Log = log;
-            Configuration = configuration;
             Progress = (Progress<ProgressLog>)progress;
             ExcelWorkbookCreatorService = excelWorkbookCreatorService;
             AppSettings = configuration.GetSection("sharesSettings").Get<Settings>();
@@ -50,7 +48,7 @@ namespace Metalhead.SharesGainLossTracker.WpfApp
             };
         }
 
-        public void ProgressLog(object sender, ProgressLog e)
+        private void ProgressLog(object sender, ProgressLog e)
         {
             CreatedExcelFile = e.CreatedExcelFile;
 

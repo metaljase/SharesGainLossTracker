@@ -16,19 +16,15 @@ public class ExcelWorkbookCreatorServiceTests
     private readonly ExcelWorkbookCreatorService _sut;
     private readonly Mock<ILogger<ExcelWorkbookCreatorService>> _mockLogger = new();
     private readonly Mock<IProgress<ProgressLog>> _mockProgress = new();
-    private readonly Mock<IStocksDataService> _mockStocksDataService = new();
-    private readonly Mock<ISharesInputLoader> _mockSharesInputLoader = new();
     private readonly Mock<ISharesOutputService> _mockSharesOutputService = new();
     private readonly Mock<IFileStreamFactory> _mockFileStreamFactory = new();
-    private readonly Mock<ISharesInputHelperWrapper> _mockSharesInputHelper = new();
     private readonly Mock<ISharesOutputDataTableHelperWrapper> _mockSharesOutputDataTableHelper = new();
-    private readonly Mock<ISharesOutputHelperWrapper> _mockSharesOutputHelper = new();
 
     public ExcelWorkbookCreatorServiceTests()
     {
         _mockProgress = new Mock<IProgress<ProgressLog>>();
 
-        _sut = new ExcelWorkbookCreatorService(_mockLogger.Object, _mockProgress.Object, _mockStocksDataService.Object, _mockSharesInputLoader.Object, _mockSharesOutputService.Object, _mockFileStreamFactory.Object, _mockSharesInputHelper.Object, _mockSharesOutputDataTableHelper.Object, _mockSharesOutputHelper.Object);
+        _sut = new ExcelWorkbookCreatorService(_mockLogger.Object, _mockProgress.Object, _mockSharesOutputService.Object, _mockFileStreamFactory.Object, _mockSharesOutputDataTableHelper.Object);
     }
 
     [Fact]

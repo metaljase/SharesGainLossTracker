@@ -13,15 +13,13 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
 {
     public class App
     {
-        public ILogger<App> Log { get; }
-        public Settings AppSettings { get; }
-        private IConfiguration Configuration { get; }
-        public IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; }
+        private ILogger<App> Log { get; }
+        private Settings AppSettings { get; }
+        private IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; }
 
         public App(ILogger<App> log, IConfiguration configuration, IExcelWorkbookCreatorService excelWorkbookCreatorService)
         {
             Log = log;
-            Configuration = configuration;
             ExcelWorkbookCreatorService = excelWorkbookCreatorService;
             AppSettings = configuration.GetSection("sharesSettings").Get<Settings>();
         }

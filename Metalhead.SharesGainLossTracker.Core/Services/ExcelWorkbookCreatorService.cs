@@ -15,27 +15,19 @@ namespace Metalhead.SharesGainLossTracker.Core.Services;
 
 public class ExcelWorkbookCreatorService : IExcelWorkbookCreatorService
 {
-    public ILogger<ExcelWorkbookCreatorService> Log { get; }
-    public IProgress<ProgressLog> Progress { get; }
-    public IStocksDataService StocksDataService { get; }
-    public ISharesInputLoader ShareInputLoader { get; }
-    public ISharesOutputService SharesOutputService { get; }
-    public IFileStreamFactory FileStreamFactory { get; }
-    public ISharesInputHelperWrapper SharesInputHelper { get; }
-    public ISharesOutputDataTableHelperWrapper SharesOutputDataTableHelper { get; }
-    public ISharesOutputHelperWrapper SharesOutputHelper { get; }
+    private ILogger<ExcelWorkbookCreatorService> Log { get; }
+    private IProgress<ProgressLog> Progress { get; }
+    private ISharesOutputService SharesOutputService { get; }
+    private IFileStreamFactory FileStreamFactory { get; }
+    private ISharesOutputDataTableHelperWrapper SharesOutputDataTableHelper { get; }
 
-    public ExcelWorkbookCreatorService(ILogger<ExcelWorkbookCreatorService> log, IProgress<ProgressLog> progress, IStocksDataService stocksDataService, ISharesInputLoader shareInputLoader, ISharesOutputService sharesOutputService, IFileStreamFactory fileStreamFactory, ISharesInputHelperWrapper sharesInputHelper, ISharesOutputDataTableHelperWrapper sharesOutputDataTableHelper, ISharesOutputHelperWrapper sharesOutputHelper)
+    public ExcelWorkbookCreatorService(ILogger<ExcelWorkbookCreatorService> log, IProgress<ProgressLog> progress, ISharesOutputService sharesOutputService, IFileStreamFactory fileStreamFactory, ISharesOutputDataTableHelperWrapper sharesOutputDataTableHelper)
     {
         Log = log;
         Progress = progress;
-        StocksDataService = stocksDataService;
-        ShareInputLoader = shareInputLoader;
         SharesOutputService = sharesOutputService;
         FileStreamFactory = fileStreamFactory;
-        SharesInputHelper = sharesInputHelper;
         SharesOutputDataTableHelper = sharesOutputDataTableHelper;
-        SharesOutputHelper = sharesOutputHelper;
     }
 
     public async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, int apiDelayPerCallMillieseconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)

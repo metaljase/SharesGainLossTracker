@@ -4,7 +4,7 @@
     <PublishTrimmed>true</PublishTrimmed>
     <PublishSingleFile>true</PublishSingleFile>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>4.1.2</Version>
+    <Version>4.2.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
