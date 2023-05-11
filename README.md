@@ -66,5 +66,12 @@ BAG.LON,Barr (AG),537.65
 CARD.LON,Card Factory plc,140.19
 ```
 
+# Log file
+Both apps write to a log file detailing the progress of each run.  As default, the log file is located in the same directory as the app.  Data is written to the same log file for the current month, after which a new log file will be written to.  12 log files are retained before the oldest is deleted.
+
+A 3rd party library ([Serilog](https://serilog.net/)) is used for logging, and its configuration is located in `appsettings.json`.  This allows for the logs to be customised, e.g. output format and control over when log files are created/deleted.
+
+The format of the output displayed in the console app can be customised by changing the `outputTemplate` in `appsettings.json`.
+
 # Supporting other 3rd party stocks APIs
 Support can be added by writing additional classes that implement the `SharesGainLossTracker.Core.Models.IStock` interface.
