@@ -8,10 +8,10 @@ on:
 env:
   ConsoleApp_NS: Metalhead.SharesGainLossTracker.ConsoleApp
   ConsoleApp_EXE: SharesGainLossTracker.ConsoleApp
-  ConsoleApp_TF: net6.0
+  ConsoleApp_TF: net8.0
   WpfApp_NS: Metalhead.SharesGainLossTracker.WpfApp
   WpfApp_EXE: SharesGainLossTracker.WpfApp
-  WpfApp_TF: net6.0-windows
+  WpfApp_TF: net8.0-windows7.0
 
 jobs:
   build-console-app:
@@ -23,7 +23,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
 
       - name: Restore dependencies
         run: dotnet restore ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj
@@ -41,7 +41,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
 
       - name: Execute unit test
         run: dotnet test
@@ -106,7 +106,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
 
       - name: Restore dependencies
         run: dotnet restore ${{ env.WpfApp_NS }}/${{ env.WpfApp_NS }}.csproj
@@ -124,7 +124,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
 
       - name: Execute unit tests
         run: dotnet test
@@ -139,7 +139,7 @@ jobs:
       - name: Install .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
 
       - name: Create ClickOnce ${{ env.WpfApp_NS }}.exe (win-x64 self-contained)
         run: dotnet publish ${{ env.WpfApp_NS }}/${{ env.WpfApp_NS }}.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:DebugType=None -p:DebugSymbols=false
