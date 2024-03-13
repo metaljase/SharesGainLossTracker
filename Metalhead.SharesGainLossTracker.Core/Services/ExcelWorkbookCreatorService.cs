@@ -13,38 +13,29 @@ using Metalhead.SharesGainLossTracker.Core.FileSystem;
 
 namespace Metalhead.SharesGainLossTracker.Core.Services;
 
-public class ExcelWorkbookCreatorService : IExcelWorkbookCreatorService
+public class ExcelWorkbookCreatorService(ILogger<ExcelWorkbookCreatorService> log, IProgress<ProgressLog> progress, ISharesOutputService sharesOutputService, IFileStreamFactory fileStreamFactory, ISharesOutputDataTableHelperWrapper sharesOutputDataTableHelper) : IExcelWorkbookCreatorService
 {
-    private ILogger<ExcelWorkbookCreatorService> Log { get; }
-    private IProgress<ProgressLog> Progress { get; }
-    private ISharesOutputService SharesOutputService { get; }
-    private IFileStreamFactory FileStreamFactory { get; }
-    private ISharesOutputDataTableHelperWrapper SharesOutputDataTableHelper { get; }
+    private ILogger<ExcelWorkbookCreatorService> Log { get; } = log;
+    private IProgress<ProgressLog> Progress { get; } = progress;
+    private ISharesOutputService SharesOutputService { get; } = sharesOutputService;
+    private IFileStreamFactory FileStreamFactory { get; } = fileStreamFactory;
+    private ISharesOutputDataTableHelperWrapper SharesOutputDataTableHelper { get; } = sharesOutputDataTableHelper;
 
-    public ExcelWorkbookCreatorService(ILogger<ExcelWorkbookCreatorService> log, IProgress<ProgressLog> progress, ISharesOutputService sharesOutputService, IFileStreamFactory fileStreamFactory, ISharesOutputDataTableHelperWrapper sharesOutputDataTableHelper)
+    public async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, bool endpointReturnsAdjustedClose, int apiDelayPerCallMillieseconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
     {
-        Log = log;
-        Progress = progress;
-        SharesOutputService = sharesOutputService;
-        FileStreamFactory = fileStreamFactory;
-        SharesOutputDataTableHelper = sharesOutputDataTableHelper;
-    }
-
-    public async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, int apiDelayPerCallMillieseconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
-    {
-        var sharesOutput = await SharesOutputService.CreateSharesOutputAsync(model, sharesInputFileFullPath, stocksApiUrl, apiDelayPerCallMillieseconds, orderByDateDescending, appendPriceToStockName);
+        var sharesOutput = await SharesOutputService.CreateSharesOutputAsync(model, sharesInputFileFullPath, stocksApiUrl, endpointReturnsAdjustedClose, apiDelayPerCallMillieseconds, orderByDateDescending, appendPriceToStockName);
 
         if (sharesOutput is null)
         {
             return null;
         }
 
-        // Create a DataTable containing the gain/loss, and a DataTable containing the adjusted close price.
-        List<DataTable> dataTables = new()
-        {
+        // Create a DataTable containing the gain/loss, and a DataTable containing the close price.
+        List<DataTable> dataTables =
+            [
             SharesOutputDataTableHelper.CreateGainLossPivotedDataTable(sharesOutput, "Gain/Loss"),
-            SharesOutputDataTableHelper.CreateAdjustedClosePivotedDataTable(sharesOutput, "Adjusted Close")
-        };
+            SharesOutputDataTableHelper.CreateClosePivotedDataTable(sharesOutput, endpointReturnsAdjustedClose ? "Adjusted Close" : "Close")
+            ];
 
         // Create an Excel Workbook from the DataTables.
         try

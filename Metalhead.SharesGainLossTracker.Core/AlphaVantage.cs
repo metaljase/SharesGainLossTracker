@@ -10,20 +10,14 @@ using Metalhead.SharesGainLossTracker.Core.Models;
 
 namespace Metalhead.SharesGainLossTracker.Core
 {
-    public class AlphaVantage : IStock
+    public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> progress) : IStock
     {
-        public ILogger<AlphaVantage> Log { get; }
-        public IProgress<ProgressLog> Progress { get; }
+        public ILogger<AlphaVantage> Log { get; } = log;
+        public IProgress<ProgressLog> Progress { get; } = progress;
 
-        public AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> progress)
+        async Task<List<FlattenedStock>> IStock.GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages, bool endpointReturnsAdjustedClose)
         {
-            Log = log;
-            Progress = progress;
-        }
-
-        async Task<List<FlattenedStock>> IStock.GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages)
-        {
-            List<AlphaVantageRoot> stocks = new();
+            List<AlphaVantageRoot> stocks = [];
             var hadDeserializingErrors = false;
             var hadRateLimitError = false;
             var hadInvalidApiCall = false;
@@ -32,7 +26,7 @@ namespace Metalhead.SharesGainLossTracker.Core
             {
                 if (item.IsSuccessStatusCode)
                 {
-                    var stock = await item.Content.ReadFromJsonAsync<AlphaVantageRoot>();
+                    var stock = await item.Content.ReadFromJsonAsync(MetadataDeSerializerContext.Default.AlphaVantageRoot);
                     if (stock is not null && stock.MetaData is not null && stock.Data is not null && stock.Data.Count > 0)
                     {
                         stocks.Add(stock);
@@ -71,10 +65,10 @@ namespace Metalhead.SharesGainLossTracker.Core
                 Progress.Report(new ProgressLog(MessageImportance.Bad, "Received unexpected data from stocks API."));
             }
 
-            return GetFlattenedStocks(stocks);
+            return GetFlattenedStocks(stocks, endpointReturnsAdjustedClose);
         }
 
-        static List<FlattenedStock> GetFlattenedStocks(List<AlphaVantageRoot> stocks)
+        static List<FlattenedStock> GetFlattenedStocks(List<AlphaVantageRoot> stocks, bool closeValueIsAdjusted)
         {
             var flattenedStocks = new List<FlattenedStock>();
 
@@ -84,7 +78,8 @@ namespace Metalhead.SharesGainLossTracker.Core
                 {
                     foreach (var data in stock.Data)
                     {
-                        flattenedStocks.Add(new FlattenedStock(DateTime.Parse(data.Key), stock.MetaData.Symbol, Convert.ToDouble(data.Value.AdjustedClose)));
+                        var close = closeValueIsAdjusted ? Convert.ToDouble(data.Value.AdjustedClose) : Convert.ToDouble(data.Value.Close);
+                        flattenedStocks.Add(new FlattenedStock(DateTime.Parse(data.Key), stock.MetaData.Symbol, close));
                     }
                 }
             }

@@ -3,8 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Serilog;
 using System;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -14,7 +16,6 @@ using Metalhead.SharesGainLossTracker.Core.FileSystem;
 using Metalhead.SharesGainLossTracker.Core.Helpers;
 using Metalhead.SharesGainLossTracker.Core.Models;
 using Metalhead.SharesGainLossTracker.Core.Services;
-using Serilog;
 
 namespace Metalhead.SharesGainLossTracker.ConsoleApp
 {
@@ -22,19 +23,64 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
     {
         static async Task Main(string[] args)
         {
-            using IHost host = CreateHostBuilder(args).Build();
-            using var serviceScope = host.Services.CreateScope();
+            var builder = Host.CreateApplicationBuilder(args);
+            // WARNING: When overriding appsettings.json with environment settings, be careful with arrays.  Different
+            // amounts of elements in arrays will be mixed into appsettings.json, i.e. not wiped over and rewritten.
 
-            var services = serviceScope.ServiceProvider;
+            builder.Logging.ClearProviders().AddSerilog();
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(builder.Configuration)
+                .Enrich.FromLogContext()
+                .CreateLogger();
+
+            builder.Services.AddOptions<SharesOptions>().Bind(builder.Configuration.GetSection(SharesOptions.SharesSettings));
+            builder.Services.AddSingleton<IValidateOptions<SharesOptions>, SharesValidation>();
+            builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<SharesOptions>>().Value);
+
+            builder.Services.AddHttpClient();
+            builder.Services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
+            builder.Services.AddSingleton<IProgress<ProgressLog>, Progress<ProgressLog>>();
+            builder.Services.AddSingleton<App>();
+            builder.Services.AddSingleton<IExcelWorkbookCreatorService, ExcelWorkbookCreatorService>();
+            builder.Services.AddSingleton<ISharesInputLoader, SharesInputLoaderCsv>();
+            builder.Services.AddSingleton<IStocksDataService, StocksDataService>();
+            builder.Services.AddSingleton<SharesInputLoaderService, SharesInputLoaderService>();
+            builder.Services.AddSingleton<ISharesOutputService, SharesOutputService>();
+            builder.Services.AddSingleton<IFileSystemFileWrapper, FileSystemFileWrapper>();
+            builder.Services.AddSingleton<IFileStreamFactory, FileStreamFactory>();
+            builder.Services.AddSingleton<ISharesInputHelperWrapper, SharesInputHelperWrapper>();
+            builder.Services.AddSingleton<ISharesOutputDataTableHelperWrapper, SharesOutputDataTableHelperWrapper>();
+            builder.Services.AddSingleton<ISharesOutputHelperWrapper, SharesOutputHelperWrapper>();            
+
+            var stockApiSources = Assembly.Load("Metalhead.SharesGainLossTracker.Core")
+                .GetTypes().Where(type => typeof(IStock).IsAssignableFrom(type) && !type.IsInterface);
+            
+            foreach (var stockApiSource in stockApiSources)
+            {
+                builder.Services.AddSingleton(typeof(IStock), stockApiSource);
+            }
+            
+            using var host = builder.Build();
+            
+            using var serviceScope = host.Services.CreateScope();
+            var serviceProvider = serviceScope.ServiceProvider;
 
             try
             {
-                ValidateSettings(host.Services.GetRequiredService<IConfiguration>().GetSection("sharesSettings").Get<Settings>());
-                await services.GetRequiredService<App>().RunAsync();
+                await serviceProvider.GetRequiredService<App>().RunAsync();
             }
             catch (Exception ex)
             {
-                Log.Logger.Fatal(ex, "Application exited unexpectedly.  See log file for details.");
+                if (ex is OptionsValidationException)
+                {
+                    Log.Logger.Error(ex, "Application exited due to invalid app settings.  See log file for details.");
+                    // Logger is configured not to write exceptions to the console, but write the validation errors.
+                    Console.WriteLine(ex.Message.Replace("; ", Environment.NewLine));
+                }
+                else
+                {
+                    Log.Logger.Fatal(ex, "Application exited unexpectedly.  See log file for details.");
+                }
             }
             finally
             {
@@ -43,115 +89,6 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
 
             Console.WriteLine("Press any key to exit.");
             Console.ReadKey();
-        }
-
-        private static IHostBuilder CreateHostBuilder(string[] args)
-        {
-            var stockApiSources = Assembly.Load("Metalhead.SharesGainLossTracker.Core")
-                .GetTypes().Where(type => typeof(IStock).IsAssignableFrom(type) && !type.IsInterface);
-
-            return Host
-                .CreateDefaultBuilder(args)
-                .ConfigureHostConfiguration(hostConfig =>
-                {
-                    hostConfig.SetBasePath(Directory.GetCurrentDirectory());
-                    hostConfig.AddCommandLine(args);
-                    hostConfig.AddEnvironmentVariables(prefix: "DOTNET_");                    
-                })
-                .ConfigureAppConfiguration((hostingContext, hostConfig) =>
-                {
-                    hostConfig.AddConfiguration(GetConfiguration(hostingContext, hostConfig));
-                })
-                .ConfigureServices((hostContext, services) =>
-                {
-                    services.AddHttpClient();
-                    services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
-                    services.AddSingleton<IConfiguration>(hostContext.Configuration);
-                    services.AddSingleton<IProgress<ProgressLog>, Progress<ProgressLog>>();
-                    services.AddSingleton<App>();
-                    services.AddSingleton<IExcelWorkbookCreatorService, ExcelWorkbookCreatorService>();
-                    services.AddSingleton<ISharesInputLoader, SharesInputLoaderCsv>();
-                    services.AddSingleton<IStocksDataService, StocksDataService>();
-                    services.AddSingleton<SharesInputLoaderService, SharesInputLoaderService>();
-                    services.AddSingleton<ISharesOutputService, SharesOutputService>();
-                    services.AddSingleton<IFileSystemFileWrapper, FileSystemFileWrapper>();
-                    services.AddSingleton<IFileStreamFactory, FileStreamFactory>();
-                    services.AddSingleton<ISharesInputHelperWrapper, SharesInputHelperWrapper>();
-                    services.AddSingleton<ISharesOutputDataTableHelperWrapper, SharesOutputDataTableHelperWrapper>();
-                    services.AddSingleton<ISharesOutputHelperWrapper, SharesOutputHelperWrapper>();
-
-                    foreach (var stockApiSource in stockApiSources)
-                    {
-                        services.AddSingleton(typeof(IStock), stockApiSource);
-                    }
-                })
-                .UseSerilog();
-        }
-
-        private static IConfigurationRoot GetConfiguration(HostBuilderContext hostingContext, IConfigurationBuilder builder)
-        {
-            // Load configuration and settings.
-            builder
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", false, true)
-                .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", true, true);
-
-            if (hostingContext.HostingEnvironment.IsDevelopment())
-            {
-                builder.AddUserSecrets(Assembly.GetExecutingAssembly(), true);
-            }
-
-            // WARNING: When overriding appsettings.json with environment settings, be careful with arrays.  Different
-            // amounts of elements in arrays will be mixed into appsettings.json, i.e. not wiped over and rewritten.
-
-            Log.Logger = new LoggerConfiguration()
-                .ReadFrom.Configuration(builder.Build())
-                .Enrich.FromLogContext()
-                .CreateLogger();
-
-            return builder.Build();
-        }
-
-        private static void ValidateSettings(Settings settings)
-        {
-            if (settings.Groups is null)
-            {
-                Log.Logger.Error("Groups array is missing from appsettings.json.");
-                throw new ArgumentNullException("Groups", "Groups array is missing from appsettings.json.");
-            }
-            else if (!settings.Groups.Any())
-            {
-                Log.Logger.Error("Groups array contains zero elements in appsettings.json.");
-                throw new ArgumentException("Groups array contains zero elements in appsettings.json.");
-            }
-            else if (!settings.Groups.Any(e => e.Enabled))
-            {
-                Log.Logger.Error("No enabled elements in appsettings.json.");
-                throw new ArgumentException("No enabled elements in appsettings.json.");
-            }
-
-            foreach (var shareGroup in settings.Groups.Where(g => g.Enabled))
-            {
-                var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
-                if (!string.IsNullOrWhiteSpace(shareGroup.SymbolsFullPath) && !File.Exists(symbolsFullPath))
-                {
-                    Log.Error("Shares input file (in appsettings.json) not found: {0}", symbolsFullPath);
-                    throw new FileNotFoundException($"Shares input file (in appsettings.json) not found.", symbolsFullPath);
-                }
-
-                var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
-                if (outputFilePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
-                {
-                    Log.Error("Output file path '{0}' in appsettings.json contains invalid characters.", shareGroup.OutputFilePath);
-                    throw new ArgumentException($"Output file path '{shareGroup.OutputFilePath}' in appsettings.json contains invalid characters.");
-                }
-
-                if (shareGroup.OutputFilenamePrefix.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-                {
-                    Log.Error("Output filename prefix '{0}' contains invalid characters.", shareGroup.OutputFilenamePrefix);
-                    throw new ArgumentException($"Output filename prefix '{shareGroup.OutputFilenamePrefix}' in appsettings.json contains invalid characters.");
-                }
-            }
         }
     }
 }

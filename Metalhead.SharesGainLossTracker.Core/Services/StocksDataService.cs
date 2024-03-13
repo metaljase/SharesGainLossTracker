@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,27 +9,17 @@ using System.Threading.Tasks;
 
 using Metalhead.SharesGainLossTracker.Core.Helpers;
 using Metalhead.SharesGainLossTracker.Core.Models;
-using Polly;
-using Polly.Retry;
+
 
 namespace Metalhead.SharesGainLossTracker.Core.Services;
 
-public class StocksDataService : IStocksDataService
+public class StocksDataService(ILogger<StocksDataService> log, IProgress<ProgressLog> progress, HttpClient httpClient, IEnumerable<IStock> iStocks, ISharesInputHelperWrapper sharesInputHelperWrapper) : IStocksDataService
 {
-    private ILogger<StocksDataService> Log { get; }
-    private IProgress<ProgressLog> Progress { get; }
-    private HttpClient HttpClient { get; }
-    private IEnumerable<IStock> IStocks { get; }
-    private ISharesInputHelperWrapper SharesInputHelperWrapper { get; }
-
-    public StocksDataService(ILogger<StocksDataService> log, IProgress<ProgressLog> progress, HttpClient httpClient, IEnumerable<IStock> iStocks, ISharesInputHelperWrapper sharesInputHelperWrapper)
-    {
-        Log = log;
-        Progress = progress;
-        HttpClient = httpClient;
-        IStocks = iStocks;
-        SharesInputHelperWrapper = sharesInputHelperWrapper;
-    }
+    private ILogger<StocksDataService> Log { get; } = log;
+    private IProgress<ProgressLog> Progress { get; } = progress;
+    private HttpClient HttpClient { get; } = httpClient;
+    private IEnumerable<IStock> IStocks { get; } = iStocks;
+    private ISharesInputHelperWrapper SharesInputHelperWrapper { get; } = sharesInputHelperWrapper;
 
     public IStock GetStock(string model)
     {
@@ -48,14 +40,14 @@ public class StocksDataService : IStocksDataService
         return Policy
             .HandleInner<HttpRequestException>()
             .OrInner<TaskCanceledException>()
-            .WaitAndRetryAsync(new[]
-            {
+            .WaitAndRetryAsync(
+            [
                 TimeSpan.FromMilliseconds(Math.Max(0, apiDelayPerCallMilleseconds)),
                 TimeSpan.FromMilliseconds(Math.Max(1000, apiDelayPerCallMilleseconds)),
                 TimeSpan.FromMilliseconds(Math.Max(5000, apiDelayPerCallMilleseconds)),
                 TimeSpan.FromMilliseconds(Math.Max(10000, apiDelayPerCallMilleseconds)),
                 TimeSpan.FromMilliseconds(Math.Max(30000, apiDelayPerCallMilleseconds))
-            }, (exception, timeSpan) =>
+            ], (exception, timeSpan) =>
             {
                 Log.LogWarning(exception, "Error fetching stocks data.  Retrying in {RetryInMilliseconds} milliseconds.", timeSpan.TotalMilliseconds);
                 Progress.Report(new ProgressLog(MessageImportance.Bad, $"Error fetching stocks data.  Retrying in {timeSpan.TotalMilliseconds} milliseconds."));
@@ -94,7 +86,7 @@ public class StocksDataService : IStocksDataService
             throw;
         }
 
-        List<HttpResponseMessage> httpResponseMessages = new();
+        List<HttpResponseMessage> httpResponseMessages = [];
         try
         {
             foreach (var symbolName in SharesInputHelperWrapper.GetDistinctSymbolsNames(sharesInput))
@@ -120,7 +112,7 @@ public class StocksDataService : IStocksDataService
             }
         }
 
-        return httpResponseMessages.ToArray();
+        return [.. httpResponseMessages];
     }
 
     private async Task<HttpResponseMessage> FetchStockDataAsync(AsyncRetryPolicy pollyPolicy, string stocksApiUrl, string stockSymbol, string stockName)
@@ -166,12 +158,9 @@ public class StocksDataService : IStocksDataService
 
     public bool IsExpectedStocksDataMapped(List<FlattenedStock> flattenedStocks, List<Share> sharesInput)
     {
-        if (flattenedStocks is null)
-        {
-            throw new ArgumentNullException(nameof(flattenedStocks));
-        }
+        ArgumentNullException.ThrowIfNull(flattenedStocks);
 
-        if (!flattenedStocks.Any())
+        if (flattenedStocks.Count == 0)
         {
             throw new ArgumentException("Failed to fetch any stocks data.", nameof(flattenedStocks));
         }

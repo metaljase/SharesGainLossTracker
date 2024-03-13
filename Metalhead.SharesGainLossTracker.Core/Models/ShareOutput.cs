@@ -8,25 +8,25 @@ namespace Metalhead.SharesGainLossTracker.Core.Models
         public string Symbol { get; set; }
         public double PurchasePrice { get; set; }
         public string Date { get; }
-        public double? AdjustedClose { get; set; }
+        public double? Close { get; set; }
         public double? GainLoss { get; }
 
 
-        public ShareOutput(string stockName, string symbol, double purchasePrice, DateTime date, double adjustedClose)
+        public ShareOutput(string stockName, string symbol, double purchasePrice, DateTime date, double close)
         {
             StockName = stockName;
             Symbol = symbol;
             PurchasePrice = purchasePrice;
             Date = date.ToString("yyyy-MM-dd");
-            AdjustedClose = adjustedClose;
+            Close = close;
 
             if (purchasePrice == 0)
             {
-                GainLoss = (adjustedClose > 0) ? 100 : 0;
+                GainLoss = (close > 0) ? 100 : 0;
             }
             else
             {
-                GainLoss = Math.Round((adjustedClose - purchasePrice) / purchasePrice * 100.0, 1);
+                GainLoss = Math.Round((close - purchasePrice) / purchasePrice * 100.0, 1);
             }
         }
     }

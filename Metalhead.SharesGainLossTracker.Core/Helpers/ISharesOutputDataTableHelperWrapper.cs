@@ -8,5 +8,5 @@ namespace Metalhead.SharesGainLossTracker.Core.Helpers;
 public interface ISharesOutputDataTableHelperWrapper
 {
     DataTable CreateGainLossPivotedDataTable(List<ShareOutput> sharesOutput, string dataTableName);
-    DataTable CreateAdjustedClosePivotedDataTable(List<ShareOutput> sharesOutput, string dataTableName);
+    DataTable CreateClosePivotedDataTable(List<ShareOutput> sharesOutput, string dataTableName);
 }

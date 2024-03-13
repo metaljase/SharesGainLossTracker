@@ -1,13 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
+using Moq;
 using System.Data;
 using System.Reflection;
+using Xunit;
 
 using Metalhead.SharesGainLossTracker.Core.FileSystem;
 using Metalhead.SharesGainLossTracker.Core.Helpers;
 using Metalhead.SharesGainLossTracker.Core.Models;
 using Metalhead.SharesGainLossTracker.Core.Services;
-using Moq;
-using Xunit;
 
 namespace Metalhead.SharesGainLossTracker.Core.Tests.Services;
 
@@ -27,8 +27,10 @@ public class ExcelWorkbookCreatorServiceTests
         _sut = new ExcelWorkbookCreatorService(_mockLogger.Object, _mockProgress.Object, _mockSharesOutputService.Object, _mockFileStreamFactory.Object, _mockSharesOutputDataTableHelper.Object);
     }
 
-    [Fact]
-    public async Task CreateWorkbookAsync_CreatesWorkbookAndReturnsWorkbookPath_GivenValidInput()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CreateWorkbookAsync_CreatesWorkbookAndReturnsWorkbookPath_GivenValidInput(bool endpointReturnsAdjustedClose)
     {
         // Arrange
         var sharesInputFileFullPath = "My Shares.csv";
@@ -38,9 +40,10 @@ public class ExcelWorkbookCreatorServiceTests
         var outputFilePath = @"C:\Temp\";
         var outputFilenamePrefix = "My Shares ";
         var appendPriceToStockName = true;
+        var closeDataTableName = endpointReturnsAdjustedClose ? "Adjusted Close" : "Close";
 
         _mockSharesOutputService
-            .Setup(x => x.CreateSharesOutputAsync("IStockProxy", sharesInputFileFullPath, stocksApiUrl, apiDelayPerCallMillieseconds, orderByDateDescending, appendPriceToStockName))
+            .Setup(x => x.CreateSharesOutputAsync("IStockProxy", sharesInputFileFullPath, stocksApiUrl, endpointReturnsAdjustedClose, apiDelayPerCallMillieseconds, orderByDateDescending, appendPriceToStockName))
             .ReturnsAsync(MockData.CreateSharesOutput())
             .Verifiable();
 
@@ -50,8 +53,8 @@ public class ExcelWorkbookCreatorServiceTests
             .Verifiable();
 
         _mockSharesOutputDataTableHelper
-            .Setup(x => x.CreateAdjustedClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"))
-            .Returns(MockData.CreateAdjustedCloseDataTable())
+            .Setup(x => x.CreateClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), closeDataTableName))
+            .Returns(MockData.CreateCloseDataTable(endpointReturnsAdjustedClose))
             .Verifiable();
 
         var _mockMemoryStream = new Mock<MemoryStream>();
@@ -67,6 +70,7 @@ public class ExcelWorkbookCreatorServiceTests
             "IStockProxy",
             sharesInputFileFullPath,
             stocksApiUrl,
+            endpointReturnsAdjustedClose,
             apiDelayPerCallMillieseconds,
             orderByDateDescending,
             outputFilePath,
@@ -77,28 +81,28 @@ public class ExcelWorkbookCreatorServiceTests
         Assert.NotNull(result);
         Assert.Equal(outputFullFilePath, result);
 
-        _mockSharesOutputService.Verify(x => x.CreateSharesOutputAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Once);
+        _mockSharesOutputService.Verify(x => x.CreateSharesOutputAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Once);
         _mockSharesOutputDataTableHelper.Verify(x => x.CreateGainLossPivotedDataTable(It.IsAny<List<ShareOutput>>(), "Gain/Loss"), Times.Once);
-        _mockSharesOutputDataTableHelper.Verify(x => x.CreateAdjustedClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"), Times.Once);
+        _mockSharesOutputDataTableHelper.Verify(x => x.CreateClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), closeDataTableName), Times.Once);
         _mockFileStreamFactory.Verify(x => x.Create(It.IsAny<string>(), FileMode.CreateNew, FileAccess.Write), Times.Once);
     }
 
-    public static IEnumerable<object[]> CreateInvalidGainLossPivotedDataTable =>
-       new List<object[]>
-       {
-            new object[] { null, MockData.CreateAdjustedCloseDataTable() },
-            new object[] { new DataTable(), MockData.CreateAdjustedCloseDataTable() },
-            new object[] { MockData.CreateGainLossDataTable(), null },
-            new object[] { MockData.CreateGainLossDataTable(), new DataTable() }            
-       };
+    public static readonly TheoryData<DataTable, DataTable> CreateInvalidGainLossPivotedDataTable = new()
+    {
+        {null!, MockData.CreateCloseDataTable(true)},
+        {new DataTable(), MockData.CreateCloseDataTable(true)},
+        {MockData.CreateGainLossDataTable(), null!},
+        {MockData.CreateGainLossDataTable(), new DataTable()}
+    };
 
     [Theory]
     [MemberData(nameof(CreateInvalidGainLossPivotedDataTable))]
-    public async Task CreateWorkbookAsync_SwallowsArgumentExceptionAndReturnsNull_GivenDataTablesContainNullDataTableOrNoRows(DataTable gainLossPivotedDataTable, DataTable adjustedClosePivotedDataTable)
+    public async Task CreateWorkbookAsync_SwallowsArgumentExceptionAndReturnsNull_GivenDataTablesContainNullDataTableOrNoRows(DataTable gainLossPivotedDataTable, DataTable closePivotedDataTable)
     {
         // Arrange
         var sharesInputFileFullPath = "My Shares.csv";
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
+        var endpointReturnsAdjustedClose = true;
         var apiDelayPerCallMillieseconds = 0;
         var orderByDateDescending = true;
         var outputFilePath = @"C:\Temp\";
@@ -106,7 +110,7 @@ public class ExcelWorkbookCreatorServiceTests
         var appendPriceToStockName = true;
 
         _mockSharesOutputService
-            .Setup(x => x.CreateSharesOutputAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()))
+            .Setup(x => x.CreateSharesOutputAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()))
             .ReturnsAsync(MockData.CreateSharesOutput())
             .Verifiable();
 
@@ -116,8 +120,8 @@ public class ExcelWorkbookCreatorServiceTests
             .Verifiable();
 
         _mockSharesOutputDataTableHelper
-            .Setup(x => x.CreateAdjustedClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"))
-            .Returns(adjustedClosePivotedDataTable)
+            .Setup(x => x.CreateClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"))
+            .Returns(closePivotedDataTable)
             .Verifiable();
 
         // Act
@@ -125,6 +129,7 @@ public class ExcelWorkbookCreatorServiceTests
             "IStockProxy",
             sharesInputFileFullPath,
             stocksApiUrl,
+            endpointReturnsAdjustedClose,
             apiDelayPerCallMillieseconds,
             orderByDateDescending,
             outputFilePath,
@@ -134,9 +139,9 @@ public class ExcelWorkbookCreatorServiceTests
         // Assert
         Assert.Null(result);
 
-        _mockSharesOutputService.Verify(x => x.CreateSharesOutputAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Once);
+        _mockSharesOutputService.Verify(x => x.CreateSharesOutputAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Once);
         _mockSharesOutputDataTableHelper.Verify(x => x.CreateGainLossPivotedDataTable(It.IsAny<List<ShareOutput>>(), "Gain/Loss"), Times.Once);
-        _mockSharesOutputDataTableHelper.Verify(x => x.CreateAdjustedClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"), Times.Once);
+        _mockSharesOutputDataTableHelper.Verify(x => x.CreateClosePivotedDataTable(It.IsAny<List<ShareOutput>>(), "Adjusted Close"), Times.Once);
         _mockLogger.VerifyLogging(LogLevel.Error, "Error creating Excel Workbook due to no data.");
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.Equals("Error creating Excel Workbook due to no data."))), Times.Once);
     }
@@ -145,13 +150,13 @@ public class ExcelWorkbookCreatorServiceTests
     public async Task CreateWorkbookAsMemoryStreamAsync_CreatesExcelWorkbook()
     {
         // Arrange
-        var dataTables = MockData.CreateGainLossDataTableAndAdjustedCloseDataTable();
+        var dataTables = MockData.CreateGainLossDataTableAndCloseDataTable();
         var workbookTitle = "Shares";
-        var methodInfo = typeof(ExcelWorkbookCreatorService).GetMethod("CreateWorkbookAsMemoryStreamAsync", BindingFlags.Static | BindingFlags.Public);
+        var methodInfo = typeof(ExcelWorkbookCreatorService).GetMethod(nameof(ExcelWorkbookCreatorService.CreateWorkbookAsMemoryStreamAsync), BindingFlags.Static | BindingFlags.Public);
 
         // Act and Assert
         Assert.NotNull(methodInfo);
-        var task = (Task<MemoryStream>?)methodInfo.Invoke(_sut, new object[] { dataTables, workbookTitle });
+        var task = (Task<MemoryStream>?)methodInfo.Invoke(_sut, [dataTables, workbookTitle]);
         MemoryStream? result = null;
         if (task != null)
         {
@@ -166,13 +171,13 @@ public class ExcelWorkbookCreatorServiceTests
     public async Task CreateWorkbookAsMemoryStreamAsync_ThrowsArgumentNullException_GivenNullDataTable()
     {
         // Arrange
-        List<DataTable> dataTables = null;
+        List<DataTable> dataTables = null!;
         var workbookTitle = "Shares";
 
         // Act and Assert
-        var methodInfo = typeof(ExcelWorkbookCreatorService).GetMethod("CreateWorkbookAsMemoryStreamAsync", BindingFlags.Static | BindingFlags.Public);
+        var methodInfo = typeof(ExcelWorkbookCreatorService).GetMethod(nameof(ExcelWorkbookCreatorService.CreateWorkbookAsMemoryStreamAsync), BindingFlags.Static | BindingFlags.Public);
         Assert.NotNull(methodInfo);
-        var task = Assert.ThrowsAsync<ArgumentNullException>(() => (Task<MemoryStream>?)methodInfo.Invoke(_sut, new object[] { dataTables, workbookTitle }));
+        var task = Assert.ThrowsAsync<ArgumentNullException>(() => (Task<MemoryStream>?)methodInfo.Invoke(_sut, [dataTables, workbookTitle])!);
         ArgumentNullException? result = null;
         if (task != null)
         {
@@ -186,14 +191,14 @@ public class ExcelWorkbookCreatorServiceTests
     public async Task CreateWorkbookAsMemoryStreamAsync_ThrowsArgumentException_GivenAnyDataTableIsNull()
     {
         // Arrange
-        List<DataTable> dataTables = MockData.CreateGainLossDataTableAndAdjustedCloseDataTable();
-        dataTables.Add(null);
+        List<DataTable> dataTables = MockData.CreateGainLossDataTableAndCloseDataTable();
+        dataTables.Add(null!);
         var workbookTitle = "Shares";
 
         // Act and Assert
-        var methodInfo = typeof(ExcelWorkbookCreatorService).GetMethod("CreateWorkbookAsMemoryStreamAsync", BindingFlags.Static | BindingFlags.Public);
+        var methodInfo = typeof(ExcelWorkbookCreatorService).GetMethod(nameof(ExcelWorkbookCreatorService.CreateWorkbookAsMemoryStreamAsync), BindingFlags.Static | BindingFlags.Public);
         Assert.NotNull(methodInfo);
-        var task = Assert.ThrowsAsync<ArgumentException>(() => (Task<MemoryStream>?)methodInfo.Invoke(_sut, new object[] { dataTables, workbookTitle }));
+        var task = Assert.ThrowsAsync<ArgumentException>(() => (Task<MemoryStream>?)methodInfo.Invoke(_sut, [dataTables, workbookTitle])!);
         ArgumentException? result = null;
         if (task != null)
         {
@@ -208,13 +213,13 @@ public class ExcelWorkbookCreatorServiceTests
     public async Task CreateWorkbookAsMemoryStreamAsync_ThrowsInvalidOperationException_GivenAnyDataTableWithNoRows()
     {
         // Arrange
-        List<DataTable> dataTables = new() { new DataTable(), new DataTable() };
+        List<DataTable> dataTables = [new DataTable(), new DataTable()];
         var workbookTitle = "Shares";
 
         // Act and Assert
-        var methodInfo = typeof(ExcelWorkbookCreatorService).GetMethod("CreateWorkbookAsMemoryStreamAsync", BindingFlags.Static | BindingFlags.Public);
+        var methodInfo = typeof(ExcelWorkbookCreatorService).GetMethod(nameof(ExcelWorkbookCreatorService.CreateWorkbookAsMemoryStreamAsync), BindingFlags.Static | BindingFlags.Public);
         Assert.NotNull(methodInfo);
-        var task = Assert.ThrowsAsync<InvalidOperationException>(() => (Task<MemoryStream>?)methodInfo.Invoke(_sut, new object[] { dataTables, workbookTitle }));
+        var task = Assert.ThrowsAsync<InvalidOperationException>(() => (Task<MemoryStream>?)methodInfo.Invoke(_sut, [dataTables, workbookTitle])!);
         InvalidOperationException? result = null;
         if (task != null)
         {
@@ -276,7 +281,7 @@ public class ExcelWorkbookCreatorServiceTests
     {
         // Act
         string result = ExcelWorkbookCreatorService.GetOutputFullPath(outputFilePath, outputFilenamePrefix);
-        string resultEndsWith = result.Substring(result.Length - 22);
+        string resultEndsWith = result[^22..];
 
         // Assert
         Assert.Equal($"{resultShouldStartWith}{resultEndsWith}", result);
@@ -285,7 +290,7 @@ public class ExcelWorkbookCreatorServiceTests
     [Theory]
     [InlineData(null, null)]
     [InlineData(null, "")]
-    public void GetOutputFullPath_ThrowsArgumentNullException_GivenNullFilePathAndValidOrInvalidFilenamePrefix(string outputFilePath, string outputFilenamePrefix)
+    public void GetOutputFullPath_ThrowsArgumentNullException_GivenNullFilePathAndValidOrInvalidFilenamePrefix(string? outputFilePath, string? outputFilenamePrefix)
     {
         // Act and Assert
         ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => ExcelWorkbookCreatorService.GetOutputFullPath(outputFilePath, outputFilenamePrefix));
@@ -297,7 +302,7 @@ public class ExcelWorkbookCreatorServiceTests
     [InlineData(@" ", null)]
     [InlineData(@"", "AlphaVantage - My Shares ")]
     [InlineData(@" ", "AlphaVantage - My Shares ")]
-    public void GetOutputFullPath_ThrowsArgumentException_GivenEmptyOrWhitespaceFilePathAndValidOrInvalidFilenamePrefix(string outputFilePath, string outputFilenamePrefix)
+    public void GetOutputFullPath_ThrowsArgumentException_GivenEmptyOrWhitespaceFilePathAndValidOrInvalidFilenamePrefix(string? outputFilePath, string? outputFilenamePrefix)
     {
         // Act and Assert
         ArgumentException ex = Assert.Throws<ArgumentException>(() => ExcelWorkbookCreatorService.GetOutputFullPath(outputFilePath, outputFilenamePrefix));
@@ -307,7 +312,7 @@ public class ExcelWorkbookCreatorServiceTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void GetOutputFullPath_ThrowsArgumentException_GivenInvalidFilePathAndValidOrInvalidFilenamePrefix(string outputFilenamePrefix)
+    public void GetOutputFullPath_ThrowsArgumentException_GivenInvalidFilePathAndValidOrInvalidFilenamePrefix(string? outputFilenamePrefix)
     {
         // Arrange
         string outputFilePath = string.Join("", Path.GetInvalidPathChars());
@@ -320,7 +325,7 @@ public class ExcelWorkbookCreatorServiceTests
     [Theory]
     [InlineData(@"C:\Temp", null)]
     [InlineData(@"C:\Temp\", null)]
-    public void GetOutputFullPath_ThrowsArgumentNullException_GivenValidFilePathAndNullFilenamePrefix(string outputFilePath, string outputFilenamePrefix)
+    public void GetOutputFullPath_ThrowsArgumentNullException_GivenValidFilePathAndNullFilenamePrefix(string? outputFilePath, string? outputFilenamePrefix)
     {
         // Act and Assert
         ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => ExcelWorkbookCreatorService.GetOutputFullPath(outputFilePath, outputFilenamePrefix));

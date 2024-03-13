@@ -160,31 +160,31 @@ public class SharesInputLoaderCsvTests
     }
 
     [Theory]
-    [InlineData(new object[] { new string[] { "MSFT, Microsoft Corporation" } })]
-    [InlineData(new object[] { new string[] { "MSFT, Microsoft Corporation, " } })]
-    [InlineData(new object[] { new string[] { "Microsoft Corporation, 287.14" } })]
-    [InlineData(new object[] { new string[] { " , Microsoft Corporation, 287.14" } })]
-    [InlineData(new object[] { new string[] { "MSFT, , 287.14" } })]
-    [InlineData(new object[] { new string[] { "  ,  ,  " } })]
-    [InlineData(new object[] { new string[] { "  ,  ,  ,  " } })]
-    public void CreateSharesInputFromCsv_ThrowsInvalidOperationException_GivenMissingValue(string[] sharesInputCsv)
+    [InlineData("MSFT, Microsoft Corporation")]
+    [InlineData("MSFT, Microsoft Corporation, ")]
+    [InlineData("Microsoft Corporation, 287.14")]
+    [InlineData(" , Microsoft Corporation, 287.14")]
+    [InlineData("MSFT, , 287.14")]
+    [InlineData("  ,  ,  ")]
+    [InlineData("  ,  ,  ,  ")]
+    public void CreateSharesInputFromCsv_ThrowsInvalidOperationException_GivenMissingValue(string sharesInputCsv)
     {
         // Act and Assert
-        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => _sut.CreateSharesInputFromCsv(sharesInputCsv));
+        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => _sut.CreateSharesInputFromCsv([sharesInputCsv]));
         Assert.StartsWith("Line in shares input CSV does not contain a stock symbol, stock name, and purchase price: ", ex.Message);
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.StartsWith("Line in shares input CSV does not contain a stock symbol, stock name, and purchase price:"))), Times.Once);
         _mockLogger.VerifyLogging(LogLevel.Error, $"Line in shares input CSV does not contain a stock symbol, stock name, and purchase price: ");
     }
 
     [Theory]
-    [InlineData(new object[] { new string[] { "MSFT, Microsoft Corporation, Metallica" } })]
-    [InlineData(new object[] { new string[] { "MSFT, Microsoft Corporation, +" } })]
-    [InlineData(new object[] { new string[] { "MSFT, Microsoft Corporation, \"" } })]
-    [InlineData(new object[] { new string[] { "MSFT, Microsoft Corporation, ..." } })]
-    public void CreateSharesInputFromCsv_ThrowsInvalidOperationException_GivenIncorrectlyFormattedValue(string[] sharesInputCsv)
+    [InlineData("MSFT, Microsoft Corporation, Metallica")]
+    [InlineData("MSFT, Microsoft Corporation, +")]
+    [InlineData("MSFT, Microsoft Corporation, \"")]
+    [InlineData("MSFT, Microsoft Corporation, ...")]
+    public void CreateSharesInputFromCsv_ThrowsInvalidOperationException_GivenIncorrectlyFormattedValue(string sharesInputCsv)
     {
         // Act and Assert
-        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => _sut.CreateSharesInputFromCsv(sharesInputCsv));
+        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => _sut.CreateSharesInputFromCsv([sharesInputCsv]));
         Assert.StartsWith("Shares input CSV contains incorrectly formatted value(s): ", ex.Message);
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.StartsWith("Shares input CSV contains incorrectly formatted value(s):"))), Times.Once);
         _mockLogger.VerifyLogging(LogLevel.Error, "Shares input CSV contains incorrectly formatted value(s): ");

@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
+using Moq;
+using Polly.Retry;
+using Xunit;
 
 using Metalhead.SharesGainLossTracker.Core.Helpers;
 using Metalhead.SharesGainLossTracker.Core.Models;
 using Metalhead.SharesGainLossTracker.Core.Services;
-using Moq;
-using Polly.Retry;
-using Xunit;
 
 namespace Metalhead.SharesGainLossTracker.Core.Tests.Services;
 
@@ -32,6 +32,7 @@ public class SharesOutputServiceTests
         // Arrange
         var sharesInputFileFullPath = "My Shares.csv";
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
+        var endpointReturnsAdjustedClose = true;
         var apiDelayPerCallMillieseconds = 0;
         var orderByDateDescending = true;
         var appendPriceToStockName = true;
@@ -48,7 +49,7 @@ public class SharesOutputServiceTests
         Mock<IStock> mockIStock = new();
         _mockStocksDataService.Setup(x => x.GetStock(It.IsAny<string>())).Returns(mockIStock.Object).Verifiable();
 
-        _mockSharesInputLoader.Setup(x => x.CreateSharesInput(It.IsAny<string>())).Returns(new List<Share>()).Verifiable();
+        _mockSharesInputLoader.Setup(x => x.CreateSharesInput(It.IsAny<string>())).Returns([]).Verifiable();
 
         _mockStocksDataService.Setup(x => x.GetRetryPolicy(It.IsAny<int>())).Verifiable();
 
@@ -56,7 +57,7 @@ public class SharesOutputServiceTests
             .Setup(x => x.FetchStocksDataAsync(It.IsAny<AsyncRetryPolicy>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<List<Share>>()))
             .Verifiable();
 
-        mockIStock.Setup(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>())).Verifiable();
+        mockIStock.Setup(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>(), It.IsAny<bool>())).Verifiable();
 
         _mockStocksDataService.Setup(x => x.IsExpectedStocksDataMapped(It.IsAny<List<FlattenedStock>>(), It.IsAny<List<Share>>())).Verifiable();
 
@@ -74,6 +75,7 @@ public class SharesOutputServiceTests
             "IStockProxy",
             sharesInputFileFullPath,
             stocksApiUrl,
+            endpointReturnsAdjustedClose,
             apiDelayPerCallMillieseconds,
             orderByDateDescending,
             appendPriceToStockName);
@@ -86,19 +88,18 @@ public class SharesOutputServiceTests
         _mockSharesInputLoader.Verify(x => x.CreateSharesInput(It.IsAny<string>()), Times.Once);
         _mockStocksDataService.Verify(x => x.GetRetryPolicy(It.IsAny<int>()), Times.Once);
         _mockStocksDataService.Verify(x => x.FetchStocksDataAsync(It.IsAny<AsyncRetryPolicy>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<List<Share>>()), Times.Once);
-        mockIStock.Verify(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>()), Times.Once);
+        mockIStock.Verify(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>(), It.IsAny<bool>()), Times.Once);
         _mockStocksDataService.Verify(x => x.IsExpectedStocksDataMapped(It.IsAny<List<FlattenedStock>>(), It.IsAny<List<Share>>()), Times.Once);
         _mockSharesInputHelper.Verify(x => x.AppendPurchasePriceToStockName(It.IsAny<List<Share>>()), Times.Once);
         _mockSharesInputHelper.Verify(x => x.MakeStockNamesUnique(It.IsAny<List<Share>>()), Times.Once);
         _mockSharesOutputHelper.Verify(x => x.CreateSharesOutput(It.IsAny<List<Share>>(), It.IsAny<List<FlattenedStock>>()), Times.Once);
     }
 
-    public static IEnumerable<object[]> IsExpectedStocksDataMappedExceptions =>
-        new List<object[]>
-        {
-            new object[] { new ArgumentNullException("flattenedStocks") },
-            new object[] { new ArgumentException("Failed to fetch any stocks data.", "flattenedStocks") }
-        };
+    public static readonly TheoryData<Exception> IsExpectedStocksDataMappedExceptions = new()
+    {
+        {new ArgumentNullException("flattenedStocks")},
+        {new ArgumentException("Failed to fetch any stocks data.", "flattenedStocks")}
+    };
 
     [Theory]
     [MemberData(nameof(IsExpectedStocksDataMappedExceptions))]
@@ -107,6 +108,7 @@ public class SharesOutputServiceTests
         // Arrange
         var sharesInputFileFullPath = "My Shares.csv";
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
+        var endpointReturnsAdjustedClose = true;
         var apiDelayPerCallMillieseconds = 0;
         var orderByDateDescending = true;
         var appendPriceToStockName = true;
@@ -123,7 +125,7 @@ public class SharesOutputServiceTests
         Mock<IStock> mockIStock = new();
         _mockStocksDataService.Setup(x => x.GetStock(It.IsAny<string>())).Returns(mockIStock.Object).Verifiable();
 
-        _mockSharesInputLoader.Setup(x => x.CreateSharesInput(It.IsAny<string>())).Returns(new List<Share>()).Verifiable();
+        _mockSharesInputLoader.Setup(x => x.CreateSharesInput(It.IsAny<string>())).Returns([]).Verifiable();
 
         _mockStocksDataService.Setup(x => x.GetRetryPolicy(It.IsAny<int>())).Verifiable();
 
@@ -131,7 +133,7 @@ public class SharesOutputServiceTests
             .Setup(x => x.FetchStocksDataAsync(It.IsAny<AsyncRetryPolicy>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<List<Share>>()))
             .Verifiable();
 
-        mockIStock.Setup(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>())).Verifiable();
+        mockIStock.Setup(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>(), It.IsAny<bool>())).Verifiable();
 
         _mockStocksDataService.Setup(x => x.IsExpectedStocksDataMapped(It.IsAny<List<FlattenedStock>>(), It.IsAny<List<Share>>()))
             .Throws(exception)
@@ -151,6 +153,7 @@ public class SharesOutputServiceTests
             "IStockProxy",
             sharesInputFileFullPath,
             stocksApiUrl,
+            endpointReturnsAdjustedClose,
             apiDelayPerCallMillieseconds,
             orderByDateDescending,
             appendPriceToStockName);
@@ -160,7 +163,7 @@ public class SharesOutputServiceTests
         _mockSharesInputLoader.Verify(x => x.CreateSharesInput(It.IsAny<string>()), Times.Once);
         _mockStocksDataService.Verify(x => x.GetRetryPolicy(It.IsAny<int>()), Times.Once);
         _mockStocksDataService.Verify(x => x.FetchStocksDataAsync(It.IsAny<AsyncRetryPolicy>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<List<Share>>()), Times.Once);
-        mockIStock.Verify(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>()), Times.Once);
+        mockIStock.Verify(x => x.GetStocksDataAsync(It.IsAny<HttpResponseMessage[]>(), It.IsAny<bool>()), Times.Once);
         _mockStocksDataService.Verify(x => x.IsExpectedStocksDataMapped(It.IsAny<List<FlattenedStock>>(), It.IsAny<List<Share>>()), Times.Once);
         _mockLogger.VerifyLogging(LogLevel.Error, $"Failed to fetch any stocks data for input file: ");
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.Equals($"Failed to fetch any stocks data for input file: {sharesInputFileFullPath}"))), Times.Once);

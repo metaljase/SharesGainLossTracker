@@ -2,19 +2,13 @@
 
 namespace Metalhead.SharesGainLossTracker.ConsoleApp
 {
-    public class Settings
+    public class SharesOptions
     {
-        // Current can be used as a static instance, so config is accessible everywhere.
-        public static Settings Current;
+        public const string SharesSettings = "sharesSettings";
 
-        public Settings()
-        {
-            Current = this;
-        }
-
-        public bool OpenOutputFileDirectory { get; set; }
-        public bool SuffixDateToOutputFilePath { get; set; }
-        public bool AppendPurchasePriceToStockNameColumn { get; set; }
+        public bool? OpenOutputFileDirectory { get; set; }
+        public bool? SuffixDateToOutputFilePath { get; set; }
+        public bool? AppendPurchasePriceToStockNameColumn { get; set; }
         public List<SharesGroup> Groups { get; set; }
     }
 
@@ -26,7 +20,8 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
         public string OutputFilenamePrefix { get; set; }
         public string SymbolsFullPath { get; set; }
         public string ApiUrl { get; set; }
-        public int ApiDelayPerCallMilleseconds { get; set; }
+        public bool EndpointReturnsAdjustedClose { get; set; }
+        public int ApiDelayPerCallMilleseconds { get; set; }        
         public bool OrderByDateDescending { get; set; }
     }
 }

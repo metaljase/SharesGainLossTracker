@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,30 +10,23 @@ using Metalhead.SharesGainLossTracker.Core.Services;
 
 namespace Metalhead.SharesGainLossTracker.ConsoleApp
 {
-    public class App
+    public class App(ILogger<App> log, SharesOptions sharesOptions, IExcelWorkbookCreatorService excelWorkbookCreatorService)
     {
-        private ILogger<App> Log { get; }
-        private Settings AppSettings { get; }
-        private IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; }
-
-        public App(ILogger<App> log, IConfiguration configuration, IExcelWorkbookCreatorService excelWorkbookCreatorService)
-        {
-            Log = log;
-            ExcelWorkbookCreatorService = excelWorkbookCreatorService;
-            AppSettings = configuration.GetSection("sharesSettings").Get<Settings>();
-        }
+        private ILogger<App> Log { get; } = log;
+        private SharesOptions SharesSettings { get; } = sharesOptions;
+        private IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; } = excelWorkbookCreatorService;
 
         public async Task RunAsync()
         {
             // Get stocks data for all groups and create an Excel Workbook for each.
-            List<string> outputFilePathOpened = new();
+            List<string> outputFilePathOpened = [];
 
-            foreach (var shareGroup in AppSettings.Groups.Where(g => g.Enabled))
+            foreach (var shareGroup in SharesSettings.Groups.Where(g => g.Enabled))
             {
                 var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
                 var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
 
-                if (AppSettings.SuffixDateToOutputFilePath)
+                if (SharesSettings.SuffixDateToOutputFilePath == true)
                 {
                     outputFilePath = $"{outputFilePath}{DateTime.Now.Date:yyyy-MM-dd}";
                 }
@@ -43,13 +35,14 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                     shareGroup.Model,
                     symbolsFullPath,
                     shareGroup.ApiUrl,
+                    shareGroup.EndpointReturnsAdjustedClose,
                     shareGroup.ApiDelayPerCallMilleseconds,
                     shareGroup.OrderByDateDescending,
                     outputFilePath,
                     shareGroup.OutputFilenamePrefix,
-                    AppSettings.AppendPurchasePriceToStockNameColumn);
+                    SharesSettings.AppendPurchasePriceToStockNameColumn == true);
 
-                if (excelFileFullPath is not null && AppSettings.OpenOutputFileDirectory)
+                if (excelFileFullPath is not null && SharesSettings.OpenOutputFileDirectory == true)
                 {
                     if (Directory.Exists(outputFilePath))
                     {
@@ -62,7 +55,7 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
                     }
                     else
                     {
-                        Log.LogError("Folder does not exist: ", outputFilePath);
+                        Log.LogError("Folder does not exist: {OutputFilePath}", outputFilePath);
                     }
                 }
             }

@@ -8,6 +8,6 @@ namespace Metalhead.SharesGainLossTracker.Core
 {
     public interface IStock
     {
-        Task<List<FlattenedStock>> GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages);
+        Task<List<FlattenedStock>> GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages, bool endpointReturnsAdjustedClose);
     }
 }

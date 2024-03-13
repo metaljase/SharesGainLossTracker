@@ -49,16 +49,17 @@ public class SharesOutputDataTableHelperWrapperTests
         Assert.Equal(66.1, result.Rows[1]["Tesla Inc (TSLA) X 114.11"]);
     }
 
-    [Fact]
-    public void CreateGainLossPivotedDataTable_ReturnsDataTableWithPivotedAjustedClose_GivenValidShareOutput()
+    [Theory]
+    [InlineData("Close")]
+    [InlineData("Adjusted Close")]
+    public void CreateClosePivotedDataTable_ReturnsDataTableWithPivotedClose_GivenValidShareOutput(string dataTableName)
     {
         // Arrange
         var sharesOutput = MockData.CreateSharesOutput();
-        var dataTableName = "Adjusted Close";
         var sut = new SharesOutputDataTableHelperWrapper();
 
         // Act
-        var result = sut.CreateAdjustedClosePivotedDataTable(sharesOutput, dataTableName);
+        var result = sut.CreateClosePivotedDataTable(sharesOutput, dataTableName);
 
         // Assert
         Assert.NotNull(result);

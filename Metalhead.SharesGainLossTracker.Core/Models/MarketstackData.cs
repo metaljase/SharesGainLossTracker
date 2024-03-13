@@ -7,6 +7,9 @@ namespace Metalhead.SharesGainLossTracker.Core.Models
         [JsonPropertyName("symbol")]
         public string Symbol { get; set; }
 
+        [JsonPropertyName("close")]
+        public double Close { get; set; }
+
         [JsonPropertyName("adj_close")]
         public double AdjustedClose { get; set; }
 

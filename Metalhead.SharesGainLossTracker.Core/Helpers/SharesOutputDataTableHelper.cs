@@ -26,7 +26,7 @@ internal class SharesOutputDataTableHelper
         return pivotDataTable;
     }
 
-    internal static DataTable CreateAdjustedClosePivotedDataTable(List<ShareOutput> sharesOutput, string dataTableName)
+    internal static DataTable CreateClosePivotedDataTable(List<ShareOutput> sharesOutput, string dataTableName)
     {
         DataTable pivotDataTable = new();
 
@@ -36,7 +36,7 @@ internal class SharesOutputDataTableHelper
             pivotDataTable = sharesOutput.ToPivotedDataTable(
                 item => item.StockName,
                 item => item.Date,
-                items => items.Any() ? items.Single().AdjustedClose : null);
+                items => items.Any() ? items.Single().Close : null);
         }
 
         pivotDataTable.TableName = dataTableName;

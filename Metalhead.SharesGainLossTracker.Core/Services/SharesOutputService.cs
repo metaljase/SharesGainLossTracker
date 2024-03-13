@@ -9,26 +9,16 @@ using Metalhead.SharesGainLossTracker.Core.Models;
 
 namespace Metalhead.SharesGainLossTracker.Core.Services;
 
-public class SharesOutputService : ISharesOutputService
+public class SharesOutputService(ILogger<SharesOutputService> log, IProgress<ProgressLog> progress, IStocksDataService stocksDataService, ISharesInputLoader shareInputLoader, ISharesInputHelperWrapper sharesInputHelperWrapper, ISharesOutputHelperWrapper sharesOutputHelperWrapper) : ISharesOutputService
 {
-    private ILogger<SharesOutputService> Log { get; }
-    private IProgress<ProgressLog> Progress { get; }
-    private IStocksDataService StocksDataService { get; }
-    private ISharesInputLoader ShareInputLoader { get; }
-    private ISharesInputHelperWrapper SharesInputHelper { get; }
-    private ISharesOutputHelperWrapper SharesOutputHelper { get; }
+    private ILogger<SharesOutputService> Log { get; } = log;
+    private IProgress<ProgressLog> Progress { get; } = progress;
+    private IStocksDataService StocksDataService { get; } = stocksDataService;
+    private ISharesInputLoader ShareInputLoader { get; } = shareInputLoader;
+    private ISharesInputHelperWrapper SharesInputHelper { get; } = sharesInputHelperWrapper;
+    private ISharesOutputHelperWrapper SharesOutputHelper { get; } = sharesOutputHelperWrapper;
 
-    public SharesOutputService(ILogger<SharesOutputService> log, IProgress<ProgressLog> progress, IStocksDataService stocksDataService, ISharesInputLoader shareInputLoader, ISharesInputHelperWrapper sharesInputHelperWrapper, ISharesOutputHelperWrapper sharesOutputHelperWrapper)
-    {
-        Log = log;
-        Progress = progress;
-        StocksDataService = stocksDataService;
-        ShareInputLoader = shareInputLoader;
-        SharesInputHelper = sharesInputHelperWrapper;
-        SharesOutputHelper = sharesOutputHelperWrapper;
-    }
-
-    public async Task<List<ShareOutput>> CreateSharesOutputAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, int apiDelayPerCallMillieseconds, bool orderByDateDescending, bool appendPriceToStockName)
+    public async Task<List<ShareOutput>> CreateSharesOutputAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, bool endpointReturnsAdjustedClose, int apiDelayPerCallMillieseconds, bool orderByDateDescending, bool appendPriceToStockName)
     {
         Log.LogInformation("Processing input file: {SharesInputFileFullPath}", sharesInputFileFullPath);
         Progress.Report(new ProgressLog(MessageImportance.Normal, $"Processing input file: {sharesInputFileFullPath}"));
@@ -39,7 +29,7 @@ public class SharesOutputService : ISharesOutputService
         var httpResponseMessages = await StocksDataService.FetchStocksDataAsync(pollyPolicy, stocksApiUrl, apiDelayPerCallMillieseconds, sharesInput);
 
         // Map the data from the API using the appropriate model.
-        var flattenedStocks = await stocks.GetStocksDataAsync(httpResponseMessages);
+        var flattenedStocks = await stocks.GetStocksDataAsync(httpResponseMessages, endpointReturnsAdjustedClose);
 
         // Validate data was returned from the API and mapped.
         try
@@ -50,7 +40,7 @@ public class SharesOutputService : ISharesOutputService
         {
             if (ex is ArgumentNullException or ArgumentException)
             {
-                Log.LogError(ex, "Failed to fetch any stocks data for input file: ", sharesInputFileFullPath);
+                Log.LogError(ex, "Failed to fetch any stocks data for input file: {SharesInputFileFullPath}", sharesInputFileFullPath);
                 Progress.Report(new ProgressLog(MessageImportance.Bad, $"Failed to fetch any stocks data for input file: {sharesInputFileFullPath}", false));
                 return null;
             }
@@ -69,6 +59,6 @@ public class SharesOutputService : ISharesOutputService
         List<ShareOutput> sharesOutput = SharesOutputHelper.CreateSharesOutput(sharesInput, flattenedStocks);
 
         // Order data by date.
-        return orderByDateDescending ? sharesOutput.OrderByDescending(o => o.Date).ToList() : sharesOutput.OrderBy(o => o.Date).ToList();
+        return orderByDateDescending ? [.. sharesOutput.OrderByDescending(o => o.Date)] : [.. sharesOutput.OrderBy(o => o.Date)];
     }
 }

@@ -80,11 +80,11 @@ public class StocksDataServiceTests
     public void ValidateUri_DoesNotThrowException_GivenValidUri(string uri)
     {
         // Arrange
-        var methodInfo = typeof(StocksDataService).GetMethod("ValidateUri", BindingFlags.Static | BindingFlags.Public);
+        var methodInfo = typeof(StocksDataService).GetMethod(nameof(StocksDataService.ValidateUri), BindingFlags.Static | BindingFlags.Public);
 
         // Act and Assert
         Assert.NotNull(methodInfo);
-        void Act() => methodInfo.Invoke(_sut, new object[] { uri });
+        void Act() => methodInfo.Invoke(_sut, [uri]);
 
         var exception = Record.Exception(Act);
         Assert.Null(exception);
@@ -95,11 +95,11 @@ public class StocksDataServiceTests
     {
         // Arrange
         string? uri = null;
-        var methodInfo = typeof(StocksDataService).GetMethod("ValidateUri", BindingFlags.Static | BindingFlags.Public);
+        var methodInfo = typeof(StocksDataService).GetMethod(nameof(StocksDataService.ValidateUri), BindingFlags.Static | BindingFlags.Public);
 
         // Act and Assert
         Assert.NotNull(methodInfo);
-        var ex = Assert.Throws<TargetInvocationException>(() => methodInfo.Invoke(_sut, new object[] { uri }));
+        var ex = Assert.Throws<TargetInvocationException>(() => methodInfo.Invoke(_sut, [uri]));
         Assert.IsType<ArgumentNullException>(ex.InnerException);
         Assert.Equal("uri", ((ArgumentNullException)ex.InnerException).ParamName);
     }
@@ -110,11 +110,11 @@ public class StocksDataServiceTests
     public void ValidateUri_ThrowsArgumentException_GivenInvalidUriFormatOrInvalidUriScheme(string uri)
     {
         // Arrange
-        var methodInfo = typeof(StocksDataService).GetMethod("ValidateUri", BindingFlags.Static | BindingFlags.Public);
+        var methodInfo = typeof(StocksDataService).GetMethod(nameof(StocksDataService.ValidateUri), BindingFlags.Static | BindingFlags.Public);
 
         // Act and Assert
         Assert.NotNull(methodInfo);
-        var ex = Assert.Throws<TargetInvocationException>(() => methodInfo.Invoke(_sut, new object[] { uri }));
+        var ex = Assert.Throws<TargetInvocationException>(() => methodInfo.Invoke(_sut, [uri]));
         Assert.IsType<ArgumentException>(ex.InnerException);
         Assert.Equal("uri", ((ArgumentException)ex.InnerException).ParamName);
     }
@@ -126,17 +126,17 @@ public class StocksDataServiceTests
         var sharesInput = MockData.CreateSharesInput();
         var flattenedStocks = new List<FlattenedStock>
         {
-            new FlattenedStock(DateTime.Now, "MSFT", 279.51),
-            new FlattenedStock(DateTime.Now, "TSLA", 189.53),
-            new FlattenedStock(DateTime.Now, "OCDO.LON", 520.65)
+            new(DateTime.Now, "MSFT", 279.51),
+            new(DateTime.Now, "TSLA", 189.53),
+            new(DateTime.Now, "OCDO.LON", 520.65)
         };
 
         _mockSharesInputHelperWrapper.Setup(x => x.GetDistinctSymbolsNames(sharesInput)).Returns(MockData.CreateSharesInput());
-        var methodInfo = typeof(StocksDataService).GetMethod("IsExpectedStocksDataMapped", BindingFlags.Instance | BindingFlags.Public);
+        var methodInfo = typeof(StocksDataService).GetMethod(nameof(StocksDataService.IsExpectedStocksDataMapped), BindingFlags.Instance | BindingFlags.Public);
 
         // Act and Assert
         Assert.NotNull(methodInfo);
-        var result = methodInfo.Invoke(_sut, new object[] { flattenedStocks, sharesInput });
+        var result = methodInfo.Invoke(_sut, [flattenedStocks, sharesInput]);
         Assert.NotNull(result);
         Assert.True((bool)result);
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Good && log.DownloadLog.Contains($"Successfully fetched stocks data for:"))), Times.Exactly(3));
@@ -150,16 +150,16 @@ public class StocksDataServiceTests
         var sharesInput = MockData.CreateSharesInput();
         var flattenedStocks = new List<FlattenedStock>
         {
-            new FlattenedStock(DateTime.Now, "MSFT", 279.51),
-            new FlattenedStock(DateTime.Now, "TSLA", 189.53)
+            new(DateTime.Now, "MSFT", 279.51),
+            new(DateTime.Now, "TSLA", 189.53)
         };
 
         _mockSharesInputHelperWrapper.Setup(x => x.GetDistinctSymbolsNames(sharesInput)).Returns(MockData.CreateSharesInput());
-        var methodInfo = typeof(StocksDataService).GetMethod("IsExpectedStocksDataMapped", BindingFlags.Instance | BindingFlags.Public);
+        var methodInfo = typeof(StocksDataService).GetMethod(nameof(StocksDataService.IsExpectedStocksDataMapped), BindingFlags.Instance | BindingFlags.Public);
 
         // Act and Assert
         Assert.NotNull(methodInfo);
-        var result = methodInfo.Invoke(_sut, new object[] { flattenedStocks, sharesInput });
+        var result = methodInfo.Invoke(_sut, [flattenedStocks, sharesInput]);
 
         Assert.NotNull(result);
         Assert.False((bool)result);
@@ -176,11 +176,11 @@ public class StocksDataServiceTests
         var sharesInput = MockData.CreateSharesInput();
         List<FlattenedStock>? flattenedStocks = null;
 
-        var methodInfo = typeof(StocksDataService).GetMethod("IsExpectedStocksDataMapped", BindingFlags.Instance | BindingFlags.Public);
+        var methodInfo = typeof(StocksDataService).GetMethod(nameof(StocksDataService.IsExpectedStocksDataMapped), BindingFlags.Instance | BindingFlags.Public);
 
         // Act and Assert
         Assert.NotNull(methodInfo);
-        var ex = Assert.Throws<TargetInvocationException>(() => methodInfo.Invoke(_sut, new object[] { flattenedStocks, sharesInput }));
+        var ex = Assert.Throws<TargetInvocationException>(() => methodInfo.Invoke(_sut, [flattenedStocks, sharesInput]));
         Assert.IsType<ArgumentNullException>(ex.InnerException);
         Assert.Equal("flattenedStocks", ((ArgumentNullException)ex.InnerException).ParamName);
     }
@@ -192,11 +192,11 @@ public class StocksDataServiceTests
         var sharesInput = MockData.CreateSharesInput();
         var flattenedStocks = new List<FlattenedStock>();
 
-        var methodInfo = typeof(StocksDataService).GetMethod("IsExpectedStocksDataMapped", BindingFlags.Instance | BindingFlags.Public);
+        var methodInfo = typeof(StocksDataService).GetMethod(nameof(StocksDataService.IsExpectedStocksDataMapped), BindingFlags.Instance | BindingFlags.Public);
 
         // Act and Assert
         Assert.NotNull(methodInfo);
-        var ex = Assert.Throws<TargetInvocationException>(() => methodInfo.Invoke(_sut, new object[] { flattenedStocks, sharesInput }));
+        var ex = Assert.Throws<TargetInvocationException>(() => methodInfo.Invoke(_sut, [flattenedStocks, sharesInput]));
         Assert.IsType<ArgumentException>(ex.InnerException);
         Assert.Equal("flattenedStocks", ((ArgumentException)ex.InnerException).ParamName);
     }
@@ -399,7 +399,7 @@ public class StocksDataServiceTests
 
         // Act and Assert
         Assert.NotNull(methodInfo);
-        var task = (Task<HttpResponseMessage>?)methodInfo.Invoke(_sut, new object[] { _pollyPolicy, stocksApiUrl, stockSymbol, stockName });
+        var task = (Task<HttpResponseMessage>?)methodInfo.Invoke(_sut, [_pollyPolicy, stocksApiUrl, stockSymbol, stockName]);
         HttpResponseMessage? result = null;
         if (task is not null)
         {
@@ -437,7 +437,7 @@ public class StocksDataServiceTests
 
         // Act and Assert
         Assert.NotNull(methodInfo);
-        var task = (Task<HttpResponseMessage>?)methodInfo.Invoke(_sut, new object[] { _pollyPolicy, stocksApiUrl, stockSymbol, stockName });
+        var task = (Task<HttpResponseMessage>?)methodInfo.Invoke(_sut, [_pollyPolicy, stocksApiUrl, stockSymbol, stockName]);
         HttpResponseMessage? result = null;
         if (task is not null)
         {
@@ -477,7 +477,7 @@ public class StocksDataServiceTests
         Assert.NotNull(methodInfo);
         await Assert.ThrowsAsync<HttpRequestException>(async () =>
         {
-            var task = (Task?)methodInfo?.Invoke(_sut, new object[] { _pollyPolicy, stocksApiUrl, stockSymbol, stockName });
+            var task = (Task?)methodInfo?.Invoke(_sut, [_pollyPolicy, stocksApiUrl, stockSymbol, stockName]);
             await task!.ConfigureAwait(false);
         });
     }
