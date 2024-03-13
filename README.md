@@ -1,10 +1,10 @@
 # What is SharesGainLossTracker?
-SharesGainLossTracker is an app that creates a daily breakdown of percentage gains/losses and adjusted close prices for specified shares, typically shares of stocks you have purchased.  It can be run as a .NET console app or a .NET WPF app.
+SharesGainLossTracker is an app that creates a daily breakdown of percentage gains/losses and close or adjusted close prices for specified shares, typically shares of stocks you have purchased.  It can be run as a .NET console app or a .NET WPF app.
 
 # How does SharesGainLossTracker work?
-SharesGainLossTracker will create an Excel Workbook file containing two Worksheets.  Both Worksheets will have a column for each stock specified.  One Worksheet will contain the gain/loss percentage and the other will contain the adjusted close price for each day.
+SharesGainLossTracker will create an Excel Workbook file containing two Worksheets.  Both Worksheets will have a column for each stock specified.  One Worksheet will contain the gain/loss percentage and the other will contain the close or adjusted close price for each day.
 
-The gain/loss percentage is calculated by comparing the share purchase price, and the end-of-day adjusted close price.  The shares you want to track, and the purchase price, should be specified in a CSV file.  Shares you want to track can be split-up into different groups resulting in a seperate Excel Workbook for each group.
+The gain/loss percentage is calculated by comparing the share purchase price, and the end-of-day close or adjusted close price.  The shares you want to track, and the purchase price, should be specified in a CSV file.  Shares you want to track can be split-up into different groups resulting in a seperate Excel Workbook for each group.
 
 SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack.com](https://marketstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=metaljase) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  API calls are rate limited to a certain amount of calls per milliesecond/day.
 
@@ -44,6 +44,7 @@ Open the `appsettings.json` file (or `appsettings.Development.json` if running i
 | SymbolsFullPath                      | Path and filename of the CSV file containing shares and purchase prices to be tracked.
 | ApiUrl                               | URL of 3rd party stocks API.  Replace `<API KEY>` with your API key.
 | ApiDelayPerCallMillieseconds         | Delay between API calls to keep within rate limit. One API call per stock.
+| EndpointReturnsAdjustedClose         | `true` or `false` sets whether or not the API endpoint returns an adjusted close price.
 | OrderByDateDescending                | `true` or `false` sets whether to sort dates in Excel file in ascending or descending order.
 
 Below are example CSV files that should be referenced in `appsettings.json` against `SymbolsFullPath`.  Delimited values are: Stock symbol, Excel column name, Share purchase price.  Note: Stock symbols can differ between Marketstack and Alpha Vantage.
