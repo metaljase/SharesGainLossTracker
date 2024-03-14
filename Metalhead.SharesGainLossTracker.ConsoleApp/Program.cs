@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Http;
@@ -39,6 +38,7 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
 
             builder.Services.AddHttpClient();
             builder.Services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
+
             builder.Services.AddSingleton<IProgress<ProgressLog>, Progress<ProgressLog>>();
             builder.Services.AddSingleton<App>();
             builder.Services.AddSingleton<IExcelWorkbookCreatorService, ExcelWorkbookCreatorService>();
@@ -53,8 +53,7 @@ namespace Metalhead.SharesGainLossTracker.ConsoleApp
             builder.Services.AddSingleton<ISharesOutputHelperWrapper, SharesOutputHelperWrapper>();            
 
             var stockApiSources = Assembly.Load("Metalhead.SharesGainLossTracker.Core")
-                .GetTypes().Where(type => typeof(IStock).IsAssignableFrom(type) && !type.IsInterface);
-            
+                .GetTypes().Where(type => typeof(IStock).IsAssignableFrom(type) && !type.IsInterface);            
             foreach (var stockApiSource in stockApiSources)
             {
                 builder.Services.AddSingleton(typeof(IStock), stockApiSource);
