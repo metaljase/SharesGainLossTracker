@@ -6,14 +6,14 @@ namespace Metalhead.SharesGainLossTracker.Core.Models;
 public class AlphaVantageRoot
 {
     [JsonPropertyName("Meta Data")]
-    public AlphaVantageMetaData MetaData { get; set; }
+    public required AlphaVantageMetaData MetaData { get; set; }
 
     [JsonPropertyName("Time Series (Daily)")]
-    public Dictionary<string, AlphaVantageData> Data {get; set;}
+    public required Dictionary<string, AlphaVantageData> Data {get; set;}
 
     [JsonPropertyName("Error Message")]
-    public string ErrorMessage { get; set; }
+    public string? ErrorMessage { get; set; }
 
     [JsonPropertyName("Note")]
-    public string Note { get; set; }
+    public string? Note { get; set; }
 }

@@ -10,9 +10,9 @@ namespace Metalhead.SharesGainLossTracker.WpfApp;
 
 public class SharesValidation(IConfiguration config) : IValidateOptions<SharesOptions>
 {
-    public SharesOptions Config { get; private set; } = config.GetSection(SharesOptions.SharesSettings).Get<SharesOptions>();
+    public SharesOptions? Config { get; private set; } = config.GetSection(SharesOptions.SharesSettings).Get<SharesOptions>();
 
-    public ValidateOptionsResult Validate(string name, SharesOptions options)
+    public ValidateOptionsResult Validate(string? name, SharesOptions options)
     {
         var validationResults = new List<ValidationResult>();
 
@@ -105,7 +105,8 @@ public class SharesValidation(IConfiguration config) : IValidateOptions<SharesOp
 
         if (validationResults.Count > 0)
         {
-            return ValidateOptionsResult.Fail(validationResults.Select(vr => vr.ErrorMessage));
+            var failures = validationResults.Where(v => v.ErrorMessage is not null).Select(v => v.ErrorMessage!);
+            return ValidateOptionsResult.Fail(failures);
         }
 
         return ValidateOptionsResult.Success;

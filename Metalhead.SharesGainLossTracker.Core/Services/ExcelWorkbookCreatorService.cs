@@ -21,7 +21,7 @@ public class ExcelWorkbookCreatorService(ILogger<ExcelWorkbookCreatorService> lo
     private IFileStreamFactory FileStreamFactory { get; } = fileStreamFactory;
     private ISharesOutputDataTableHelperWrapper SharesOutputDataTableHelper { get; } = sharesOutputDataTableHelper;
 
-    public async Task<string> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, bool endpointReturnsAdjustedClose, int apiDelayPerCallMillieseconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
+    public async Task<string?> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, bool endpointReturnsAdjustedClose, int apiDelayPerCallMillieseconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
     {
         var sharesOutput = await SharesOutputService.CreateSharesOutputAsync(model, sharesInputFileFullPath, stocksApiUrl, endpointReturnsAdjustedClose, apiDelayPerCallMillieseconds, orderByDateDescending, appendPriceToStockName);
 
@@ -76,8 +76,17 @@ public class ExcelWorkbookCreatorService(ILogger<ExcelWorkbookCreatorService> lo
 
     public string SaveMemoryStreamToFile(MemoryStream excelWorkbook, string fullFilePath)
     {
-        DirectoryInfo directoryInfo = new(Path.GetDirectoryName(fullFilePath));
-        directoryInfo.Create();
+        if (string.IsNullOrWhiteSpace(fullFilePath))
+        {
+            throw new ArgumentNullException(nameof(fullFilePath));
+        }
+
+        var directory = Path.GetDirectoryName(fullFilePath);
+        if (directory is not null)
+        {
+            DirectoryInfo directoryInfo = new(directory);
+            directoryInfo.Create();
+        }
 
         using (Stream fileStream = FileStreamFactory.Create(fullFilePath, FileMode.CreateNew, FileAccess.Write))
         {
@@ -90,7 +99,7 @@ public class ExcelWorkbookCreatorService(ILogger<ExcelWorkbookCreatorService> lo
         return fullFilePath;
     }
 
-    public static string GetOutputFullPath(string outputFilePath, string outputFilenamePrefix)
+    public static string GetOutputFullPath(string outputFilePath, string? outputFilenamePrefix)
     {
         // Validate outputFilePath.
         if (outputFilePath is null)

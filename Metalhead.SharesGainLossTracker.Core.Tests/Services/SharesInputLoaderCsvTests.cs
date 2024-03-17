@@ -103,7 +103,7 @@ public class SharesInputLoaderCsvTests
         string? sharesInputFilePath = null;
 
         // Act and Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => _sut.CreateSharesInputFromCsvFile(sharesInputFilePath));
+        var ex = Assert.Throws<ArgumentNullException>(() => _sut.CreateSharesInputFromCsvFile(sharesInputFilePath!));
         Assert.Contains($"Shares input file full path cannot be null.", ex.Message);
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.Equals("Shares input file full path cannot be null."))), Times.Once);
         _mockLogger.VerifyLogging(LogLevel.Error, "Shares input file full path cannot be null.");

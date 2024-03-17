@@ -327,7 +327,7 @@ public class StocksDataServiceTests
             .ThrowsAsync(new ArgumentNullException());
 
         // Act and Assert
-        var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () => await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilleseconds, sharesInput));
+        var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () => await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl!, apiDelayPerCallMilleseconds, sharesInput));
         Assert.IsType<ArgumentNullException>(ex);
         Assert.Equal("uri", ex.ParamName);
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.Equals($"URL for stocks API is invalid: {stocksApiUrl}"))), Times.Once);

@@ -230,6 +230,16 @@ public class ExcelWorkbookCreatorServiceTests
     }
 
     [Fact]
+    public void SaveMemoryStreamToFile_ThrowsArgumentNullException_GivenNullFullFilePath()
+    {
+        // Arrange
+        string? outputFullFilePath = null;
+
+        // Act and Assert
+        var ex = Assert.Throws<ArgumentNullException>(() => _sut.SaveMemoryStreamToFile(It.IsAny<MemoryStream>(), outputFullFilePath!));
+    }
+
+    [Fact]
     public void SaveMemoryStreamToFile_SavesExcelWorkbookAsFile()
     {
         // Arrange
@@ -293,7 +303,7 @@ public class ExcelWorkbookCreatorServiceTests
     public void GetOutputFullPath_ThrowsArgumentNullException_GivenNullFilePathAndValidOrInvalidFilenamePrefix(string? outputFilePath, string? outputFilenamePrefix)
     {
         // Act and Assert
-        ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => ExcelWorkbookCreatorService.GetOutputFullPath(outputFilePath, outputFilenamePrefix));
+        ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => ExcelWorkbookCreatorService.GetOutputFullPath(outputFilePath!, outputFilenamePrefix));
         Assert.Equal(nameof(outputFilePath), ex.ParamName);
     }
 
@@ -305,7 +315,7 @@ public class ExcelWorkbookCreatorServiceTests
     public void GetOutputFullPath_ThrowsArgumentException_GivenEmptyOrWhitespaceFilePathAndValidOrInvalidFilenamePrefix(string? outputFilePath, string? outputFilenamePrefix)
     {
         // Act and Assert
-        ArgumentException ex = Assert.Throws<ArgumentException>(() => ExcelWorkbookCreatorService.GetOutputFullPath(outputFilePath, outputFilenamePrefix));
+        ArgumentException ex = Assert.Throws<ArgumentException>(() => ExcelWorkbookCreatorService.GetOutputFullPath(outputFilePath!, outputFilenamePrefix));
         Assert.Equal(nameof(outputFilePath), ex.ParamName);
     }
 
@@ -328,7 +338,7 @@ public class ExcelWorkbookCreatorServiceTests
     public void GetOutputFullPath_ThrowsArgumentNullException_GivenValidFilePathAndNullFilenamePrefix(string? outputFilePath, string? outputFilenamePrefix)
     {
         // Act and Assert
-        ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => ExcelWorkbookCreatorService.GetOutputFullPath(outputFilePath, outputFilenamePrefix));
+        ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => ExcelWorkbookCreatorService.GetOutputFullPath(outputFilePath!, outputFilenamePrefix));
         Assert.Equal(nameof(outputFilenamePrefix), ex.ParamName);
     }
 }

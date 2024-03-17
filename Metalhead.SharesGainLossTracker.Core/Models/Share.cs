@@ -2,9 +2,9 @@
 
 public class Share
 {
-    public string Symbol { get; set; }
+    public required string Symbol { get; set; }
 
-    public string StockName { get; set; }
+    public required string StockName { get; set; }
 
     public double PurchasePrice { get; set; }
 }

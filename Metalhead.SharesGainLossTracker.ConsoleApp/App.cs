@@ -21,10 +21,10 @@ public class App(ILogger<App> log, SharesOptions sharesOptions, IExcelWorkbookCr
         // Get stocks data for all groups and create an Excel Workbook for each.
         List<string> outputFilePathOpened = [];
 
-        foreach (var shareGroup in SharesSettings.Groups.Where(g => g.Enabled))
+        foreach (var shareGroup in SharesSettings.Groups!.Where(g => g.Enabled))
         {
-            var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
-            var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
+            var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath!);
+            var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath!);
 
             if (SharesSettings.SuffixDateToOutputFilePath == true)
             {
@@ -32,9 +32,9 @@ public class App(ILogger<App> log, SharesOptions sharesOptions, IExcelWorkbookCr
             }
 
             var excelFileFullPath = await ExcelWorkbookCreatorService.CreateWorkbookAsync(
-                shareGroup.Model,
+                shareGroup.Model!,
                 symbolsFullPath,
-                shareGroup.ApiUrl,
+                shareGroup.ApiUrl!,
                 shareGroup.EndpointReturnsAdjustedClose,
                 shareGroup.ApiDelayPerCallMilleseconds,
                 shareGroup.OrderByDateDescending,

@@ -18,7 +18,7 @@ public class SharesOutputService(ILogger<SharesOutputService> log, IProgress<Pro
     private ISharesInputHelperWrapper SharesInputHelper { get; } = sharesInputHelperWrapper;
     private ISharesOutputHelperWrapper SharesOutputHelper { get; } = sharesOutputHelperWrapper;
 
-    public async Task<List<ShareOutput>> CreateSharesOutputAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, bool endpointReturnsAdjustedClose, int apiDelayPerCallMillieseconds, bool orderByDateDescending, bool appendPriceToStockName)
+    public async Task<List<ShareOutput>?> CreateSharesOutputAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, bool endpointReturnsAdjustedClose, int apiDelayPerCallMillieseconds, bool orderByDateDescending, bool appendPriceToStockName)
     {
         Log.LogInformation("Processing input file: {SharesInputFileFullPath}", sharesInputFileFullPath);
         Progress.Report(new ProgressLog(MessageImportance.Normal, $"Processing input file: {sharesInputFileFullPath}"));

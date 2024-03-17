@@ -5,7 +5,7 @@ namespace Metalhead.SharesGainLossTracker.Core.Models;
 public class MarketstackData
 {
     [JsonPropertyName("symbol")]
-    public string Symbol { get; set; }
+    public required string Symbol { get; set; }
 
     [JsonPropertyName("close")]
     public double Close { get; set; }
@@ -14,5 +14,5 @@ public class MarketstackData
     public double AdjustedClose { get; set; }
 
     [JsonPropertyName("date")]
-    public string Date { get; set; }
+    public required string Date { get; set; }
 }

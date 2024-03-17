@@ -59,7 +59,7 @@ public class StocksDataService(ILogger<StocksDataService> log, IProgress<Progres
         {
             throw new ArgumentNullException(nameof(uri));
         }
-        else if (!Uri.TryCreate(uri, UriKind.Absolute, out Uri uriResult))
+        else if (!Uri.TryCreate(uri, UriKind.Absolute, out Uri? uriResult))
         {
             throw new ArgumentException("Invalid URI format.", nameof(uri));
         }

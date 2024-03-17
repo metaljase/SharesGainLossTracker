@@ -47,7 +47,7 @@ public partial class MainWindow : Window
         };
     }
 
-    private void ProgressLog(object sender, ProgressLog e)
+    private void ProgressLog(object? sender, ProgressLog e)
     {
         CreatedExcelFile = e.CreatedExcelFile;
 
@@ -58,7 +58,7 @@ public partial class MainWindow : Window
 
     private async void RunButton_ClickAsync(object sender, RoutedEventArgs e)
     {
-        string excelFileFullPath = null;
+        string? excelFileFullPath = null;
         try
         {
             runButton.IsEnabled = false;
