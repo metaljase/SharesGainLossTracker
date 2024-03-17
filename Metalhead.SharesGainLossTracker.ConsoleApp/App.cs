@@ -8,55 +8,54 @@ using System.Threading.Tasks;
 
 using Metalhead.SharesGainLossTracker.Core.Services;
 
-namespace Metalhead.SharesGainLossTracker.ConsoleApp
+namespace Metalhead.SharesGainLossTracker.ConsoleApp;
+
+public class App(ILogger<App> log, SharesOptions sharesOptions, IExcelWorkbookCreatorService excelWorkbookCreatorService)
 {
-    public class App(ILogger<App> log, SharesOptions sharesOptions, IExcelWorkbookCreatorService excelWorkbookCreatorService)
+    private ILogger<App> Log { get; } = log;
+    private SharesOptions SharesSettings { get; } = sharesOptions;
+    private IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; } = excelWorkbookCreatorService;
+
+    public async Task RunAsync()
     {
-        private ILogger<App> Log { get; } = log;
-        private SharesOptions SharesSettings { get; } = sharesOptions;
-        private IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; } = excelWorkbookCreatorService;
+        // Get stocks data for all groups and create an Excel Workbook for each.
+        List<string> outputFilePathOpened = [];
 
-        public async Task RunAsync()
+        foreach (var shareGroup in SharesSettings.Groups.Where(g => g.Enabled))
         {
-            // Get stocks data for all groups and create an Excel Workbook for each.
-            List<string> outputFilePathOpened = [];
+            var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
+            var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
 
-            foreach (var shareGroup in SharesSettings.Groups.Where(g => g.Enabled))
+            if (SharesSettings.SuffixDateToOutputFilePath == true)
             {
-                var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
-                var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
+                outputFilePath = $"{outputFilePath}{DateTime.Now.Date:yyyy-MM-dd}";
+            }
 
-                if (SharesSettings.SuffixDateToOutputFilePath == true)
+            var excelFileFullPath = await ExcelWorkbookCreatorService.CreateWorkbookAsync(
+                shareGroup.Model,
+                symbolsFullPath,
+                shareGroup.ApiUrl,
+                shareGroup.EndpointReturnsAdjustedClose,
+                shareGroup.ApiDelayPerCallMilleseconds,
+                shareGroup.OrderByDateDescending,
+                outputFilePath,
+                shareGroup.OutputFilenamePrefix,
+                SharesSettings.AppendPurchasePriceToStockNameColumn == true);
+
+            if (excelFileFullPath is not null && SharesSettings.OpenOutputFileDirectory == true)
+            {
+                if (Directory.Exists(outputFilePath))
                 {
-                    outputFilePath = $"{outputFilePath}{DateTime.Now.Date:yyyy-MM-dd}";
+                    if (!outputFilePathOpened.Any(o => o.Equals(outputFilePath, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        outputFilePathOpened.Add(outputFilePath);
+                        ProcessStartInfo startInfo = new("explorer.exe", outputFilePath);
+                        Process.Start(startInfo);
+                    }
                 }
-
-                var excelFileFullPath = await ExcelWorkbookCreatorService.CreateWorkbookAsync(
-                    shareGroup.Model,
-                    symbolsFullPath,
-                    shareGroup.ApiUrl,
-                    shareGroup.EndpointReturnsAdjustedClose,
-                    shareGroup.ApiDelayPerCallMilleseconds,
-                    shareGroup.OrderByDateDescending,
-                    outputFilePath,
-                    shareGroup.OutputFilenamePrefix,
-                    SharesSettings.AppendPurchasePriceToStockNameColumn == true);
-
-                if (excelFileFullPath is not null && SharesSettings.OpenOutputFileDirectory == true)
+                else
                 {
-                    if (Directory.Exists(outputFilePath))
-                    {
-                        if (!outputFilePathOpened.Any(o => o.Equals(outputFilePath, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            outputFilePathOpened.Add(outputFilePath);
-                            ProcessStartInfo startInfo = new("explorer.exe", outputFilePath);
-                            Process.Start(startInfo);
-                        }
-                    }
-                    else
-                    {
-                        Log.LogError("Folder does not exist: {OutputFilePath}", outputFilePath);
-                    }
+                    Log.LogError("Folder does not exist: {OutputFilePath}", outputFilePath);
                 }
             }
         }

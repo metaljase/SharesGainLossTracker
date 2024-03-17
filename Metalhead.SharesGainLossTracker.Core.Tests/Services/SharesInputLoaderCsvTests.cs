@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
-
-using Metalhead.SharesGainLossTracker.Core.Models;
-using Metalhead.SharesGainLossTracker.Core.Services;
 using Moq;
 using Xunit;
+
 using Metalhead.SharesGainLossTracker.Core.FileSystem;
+using Metalhead.SharesGainLossTracker.Core.Models;
+using Metalhead.SharesGainLossTracker.Core.Services;
 
 namespace Metalhead.SharesGainLossTracker.Core.Tests.Services;
 

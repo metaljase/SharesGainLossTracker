@@ -1,15 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
-using System.Net;
-using System.Reflection;
-
-using Metalhead.SharesGainLossTracker.Core.Helpers;
-using Metalhead.SharesGainLossTracker.Core.Models;
-using Metalhead.SharesGainLossTracker.Core.Services;
 using Moq;
 using Moq.Protected;
 using Polly;
 using Polly.Retry;
+using System.Net;
+using System.Reflection;
 using Xunit;
+
+using Metalhead.SharesGainLossTracker.Core.Helpers;
+using Metalhead.SharesGainLossTracker.Core.Models;
+using Metalhead.SharesGainLossTracker.Core.Services;
 
 namespace Metalhead.SharesGainLossTracker.Core.Tests.Services;
 

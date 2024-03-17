@@ -13,7 +13,7 @@ You will need to sign up to a free (or paid) tier, which will give you a key to 
 # Setup instructions
 1) Download the latest version of the console app or WPF app for your Windows PC from [Releases](https://github.com/metaljase/SharesGainLossTracker/releases), then extract the files from the zip file.
 
-2) Perform the steps in the [configuration instructions section](https://github.com/metaljase/SharesGainLossTracker#configuration-instructions).
+2) Perform the steps in the [configuration instructions section](#configuration-instructions).
 
 3) Run the executable file (.exe) extracted from the zip file. 
 
@@ -23,7 +23,7 @@ OR
 
 2) Open the .NET solution in Visual Studio 2022 (or a compatible alternative).
 
-3) Perform the steps in the [configuration instructions section](https://github.com/metaljase/SharesGainLossTracker#configuration-instructions).
+3) Perform the steps in the [configuration instructions section](#configuration-instructions).
 
 4) Set either `SharesGainLossTracker.ConsoleApp` or `SharesGainLossTracker.WpfApp` as the startup project.
 

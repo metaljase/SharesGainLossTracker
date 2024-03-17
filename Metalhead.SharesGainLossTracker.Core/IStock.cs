@@ -4,10 +4,9 @@ using System.Threading.Tasks;
 
 using Metalhead.SharesGainLossTracker.Core.Models;
 
-namespace Metalhead.SharesGainLossTracker.Core
+namespace Metalhead.SharesGainLossTracker.Core;
+
+public interface IStock
 {
-    public interface IStock
-    {
-        Task<List<FlattenedStock>> GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages, bool endpointReturnsAdjustedClose);
-    }
+    Task<List<FlattenedStock>> GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages, bool endpointReturnsAdjustedClose);
 }

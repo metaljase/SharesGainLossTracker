@@ -1,13 +1,12 @@
 ﻿using System;
 
-namespace Metalhead.SharesGainLossTracker.Core.Models
+namespace Metalhead.SharesGainLossTracker.Core.Models;
+
+public class FlattenedStock(DateTime date, string symbol, double close)
 {
-    public class FlattenedStock(DateTime date, string symbol, double close)
-    {
-        public DateTime Date { get; set; } = date;
+    public DateTime Date { get; set; } = date;
 
-        public string Symbol { get; set; } = symbol;
+    public string Symbol { get; set; } = symbol;
 
-        public double Close { get; set; } = close;
-    }
+    public double Close { get; set; } = close;
 }

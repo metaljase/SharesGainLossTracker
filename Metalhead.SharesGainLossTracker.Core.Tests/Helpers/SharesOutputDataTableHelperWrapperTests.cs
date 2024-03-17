@@ -1,5 +1,6 @@
-﻿using Metalhead.SharesGainLossTracker.Core.Helpers;
-using Xunit;
+﻿using Xunit;
+
+using Metalhead.SharesGainLossTracker.Core.Helpers;
 
 namespace Metalhead.SharesGainLossTracker.Core.Tests.Helpers;
 

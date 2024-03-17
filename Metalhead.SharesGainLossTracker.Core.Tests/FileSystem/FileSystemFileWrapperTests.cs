@@ -1,6 +1,7 @@
-﻿using Metalhead.SharesGainLossTracker.Core.FileSystem;
-using Moq;
+﻿using Moq;
 using Xunit;
+
+using Metalhead.SharesGainLossTracker.Core.FileSystem;
 
 namespace Metalhead.SharesGainLossTracker.Core.Tests.FileSystem;
 

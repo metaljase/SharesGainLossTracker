@@ -18,30 +18,30 @@ public class SharesValidation(IConfiguration config) : IValidateOptions<SharesOp
 
         if (options.OpenOutputFileDirectory is null)
         {
-            validationResults.Add(new ValidationResult("OpenOutputFileDirectory is not specified in app settings."));
+            validationResults.Add(new ValidationResult($"{nameof(SharesOptions.OpenOutputFileDirectory)} is not specified in app settings."));
         }
 
         if (options.SuffixDateToOutputFilePath is null)
         {
-            validationResults.Add(new ValidationResult("SuffixDateToOutputFilePath is not specified in app settings."));
+            validationResults.Add(new ValidationResult($"{nameof(SharesOptions.SuffixDateToOutputFilePath)} is not specified in app settings."));
         }
 
         if (options.AppendPurchasePriceToStockNameColumn is null)
         {
-            validationResults.Add(new ValidationResult("AppendPurchasePriceToStockNameColumn is not specified in app settings."));
+            validationResults.Add(new ValidationResult($"{nameof(SharesOptions.AppendPurchasePriceToStockNameColumn)} is not specified in app settings."));
         }
 
         if (options.Groups is null)
         {
-            validationResults.Add(new ValidationResult("Groups array is not specified in app settings."));
+            validationResults.Add(new ValidationResult($"{nameof(SharesOptions.Groups)} array is not specified in app settings."));
         }
         else if (options.Groups.Count == 0)
         {
-            validationResults.Add(new ValidationResult("Groups array contains zero elements in app settings"));
+            validationResults.Add(new ValidationResult($"{nameof(SharesOptions.Groups)} array contains zero elements in app settings"));
         }
         else if (!options.Groups.Any(g => g.Enabled))
         {
-            validationResults.Add(new ValidationResult("No enabled elements found in Groups array in app settings"));
+            validationResults.Add(new ValidationResult($"No enabled elements found in {nameof(SharesOptions.Groups)} array in app settings"));
         }
         else
         {
@@ -49,34 +49,34 @@ public class SharesValidation(IConfiguration config) : IValidateOptions<SharesOp
             {
                 if (string.IsNullOrWhiteSpace(group.Model))
                 {
-                    validationResults.Add(new ValidationResult("Model not specified in app settings."));
+                    validationResults.Add(new ValidationResult($"{nameof(SharesGroup.Model)} not specified in app settings."));
                 }
 
                 if (string.IsNullOrEmpty(group.OutputFilePath))
                 {
-                    validationResults.Add(new ValidationResult("OutputFilePath not specified in app settings."));
+                    validationResults.Add(new ValidationResult($"{nameof(SharesGroup.OutputFilePath)} not specified in app settings."));
                 }
                 else
                 {
                     var outputFilePath = Environment.ExpandEnvironmentVariables(group.OutputFilePath);
                     if (outputFilePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
                     {
-                        validationResults.Add(new ValidationResult($"OutputFilePath '{group.OutputFilePath}' in app settings contains invalid characters."));
+                        validationResults.Add(new ValidationResult($"{nameof(SharesGroup.OutputFilePath)} '{group.OutputFilePath}' in app settings contains invalid characters."));
                     }
                 }
 
                 if (string.IsNullOrWhiteSpace(group.OutputFilenamePrefix))
                 {
-                    validationResults.Add(new ValidationResult("OutputFilenamePrefix not specified in app settings."));
+                    validationResults.Add(new ValidationResult($"{nameof(SharesGroup.OutputFilenamePrefix)} not specified in app settings."));
                 }
                 else if (group.OutputFilenamePrefix.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
                 {
-                    validationResults.Add(new ValidationResult($"Output filename prefix '{group.OutputFilenamePrefix}' specified in app settings contains invalid characters."));
+                    validationResults.Add(new ValidationResult($"{nameof(SharesGroup.OutputFilenamePrefix)} '{group.OutputFilenamePrefix}' specified in app settings contains invalid characters."));
                 }
 
                 if (string.IsNullOrEmpty(group.SymbolsFullPath))
                 {
-                    validationResults.Add(new ValidationResult("SymbolsFullPath not specified in app settings."));
+                    validationResults.Add(new ValidationResult($"{nameof(SharesGroup.SymbolsFullPath)} not specified in app settings."));
                 }
                 else
                 {
@@ -89,16 +89,16 @@ public class SharesValidation(IConfiguration config) : IValidateOptions<SharesOp
 
                 if (string.IsNullOrWhiteSpace(group.ApiUrl))
                 {
-                    validationResults.Add(new ValidationResult("ApiUrl not specified in app settings."));
+                    validationResults.Add(new ValidationResult($"{nameof(SharesGroup.ApiUrl)} not specified in app settings."));
                 }
                 else if (!Uri.TryCreate(group.ApiUrl, UriKind.Absolute, out _))
                 {
-                    validationResults.Add(new ValidationResult("ApiUrl specified in app settings is not a valid URL."));
+                    validationResults.Add(new ValidationResult($"{nameof(SharesGroup.ApiUrl)} specified in app settings is not a valid URL."));
                 }
 
                 if (group.ApiDelayPerCallMilleseconds < 0)
                 {
-                    validationResults.Add(new ValidationResult("ApiDelayPerCallMilleseconds cannot be less than 0."));
+                    validationResults.Add(new ValidationResult($"{nameof(SharesGroup.ApiDelayPerCallMilleseconds)} cannot be less than 0."));
                 }
             }
         }

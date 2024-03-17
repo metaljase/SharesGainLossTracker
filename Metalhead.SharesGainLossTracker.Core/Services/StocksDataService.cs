@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Metalhead.SharesGainLossTracker.Core.Helpers;
 using Metalhead.SharesGainLossTracker.Core.Models;
 
-
 namespace Metalhead.SharesGainLossTracker.Core.Services;
 
 public class StocksDataService(ILogger<StocksDataService> log, IProgress<ProgressLog> progress, HttpClient httpClient, IEnumerable<IStock> iStocks, ISharesInputHelperWrapper sharesInputHelperWrapper) : IStocksDataService

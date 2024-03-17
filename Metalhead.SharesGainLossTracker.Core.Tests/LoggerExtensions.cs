@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-
 using Moq;
 
 namespace Metalhead.SharesGainLossTracker.Core.Tests;
