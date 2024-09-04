@@ -11,7 +11,7 @@ env:
   ConsoleApp_TF: net8.0
   WpfApp_NS: Metalhead.SharesGainLossTracker.WpfApp
   WpfApp_EXE: SharesGainLossTracker.WpfApp
-  WpfApp_TF: net8.0-windows7.0
+  WpfApp_TF: net8.0-windows
 
 jobs:
   build-console-app:
