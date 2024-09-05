@@ -10,7 +10,7 @@
     <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <UserSecretsId>5d5dac08-f3c7-46fa-bdf1-5fc675286633</UserSecretsId>
-    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>    
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <_DeploymentManifestIconFile Remove="icon.ico" />
+    <TrimmerRootAssembly Include="Metalhead.SharesGainLossTracker.ConsoleApp" />
   </ItemGroup>
 
   <ItemGroup>

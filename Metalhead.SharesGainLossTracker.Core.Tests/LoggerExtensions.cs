@@ -9,7 +9,7 @@ public static class LoggerExtensions
     {
         times ??= Times.Once();
 
-        Func<object, Type, bool> state = (v, t) => v.ToString().StartsWith(expectedMessage);
+        Func<object, Type, bool> state = (v, t) => v?.ToString()?.StartsWith(expectedMessage) == true;
 
         logger.Verify(
             x => x.Log(

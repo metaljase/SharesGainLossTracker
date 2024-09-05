@@ -45,13 +45,18 @@ builder.Services.AddSingleton<IFileSystemFileWrapper, FileSystemFileWrapper>();
 builder.Services.AddSingleton<IFileStreamFactory, FileStreamFactory>();
 builder.Services.AddSingleton<ISharesInputHelperWrapper, SharesInputHelperWrapper>();
 builder.Services.AddSingleton<ISharesOutputDataTableHelperWrapper, SharesOutputDataTableHelperWrapper>();
-builder.Services.AddSingleton<ISharesOutputHelperWrapper, SharesOutputHelperWrapper>();            
+builder.Services.AddSingleton<ISharesOutputHelperWrapper, SharesOutputHelperWrapper>();
 
+// Suppress warnings as Metalhead.SharesGainLossTracker.Core has been configured to only trim it's dependencies, therefore IStock should be available.
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 var stockApiSources = Assembly.Load("Metalhead.SharesGainLossTracker.Core")
-    .GetTypes().Where(type => typeof(IStock).IsAssignableFrom(type) && !type.IsInterface);            
+    .GetTypes().Where(type => typeof(IStock).IsAssignableFrom(type) && !type.IsInterface);
+#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
 foreach (var stockApiSource in stockApiSources)
 {
+#pragma warning disable IL2072 // Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.
     builder.Services.AddSingleton(typeof(IStock), stockApiSource);
+#pragma warning restore IL2072 // Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.
 }
         
 using var host = builder.Build();
