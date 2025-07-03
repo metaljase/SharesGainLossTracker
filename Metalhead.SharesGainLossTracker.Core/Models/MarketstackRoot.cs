@@ -5,5 +5,5 @@ namespace Metalhead.SharesGainLossTracker.Core.Models;
 public class MarketstackRoot
 {
     [JsonPropertyName("data")]
-    public required MarketstackData[] Data {get; set;}
+    public MarketstackData[]? Data {get; set;}
 }

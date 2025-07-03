@@ -54,7 +54,7 @@ public class Marketstack(ILogger<Marketstack> log, IProgress<ProgressLog> progre
 
         if (stocks is not null)
         {
-            flattenedStocks.AddRange(stocks.Where(s => s.Data is not null).SelectMany(stock => stock.Data).Select(data => new FlattenedStock(DateTime.Parse(data.Date), data.Symbol, closeValueIsAdjusted ? data.AdjustedClose : data.Close)));
+            flattenedStocks.AddRange(stocks.Where(s => s.Data is not null).SelectMany(stock => stock.Data!).Select(data => new FlattenedStock(DateTime.Parse(data.Date), data.Symbol, closeValueIsAdjusted ? data.AdjustedClose : data.Close)));
         }
 
         return flattenedStocks;

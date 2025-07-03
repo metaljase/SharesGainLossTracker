@@ -5,12 +5,13 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 using Metalhead.SharesGainLossTracker.Core.Models;
 
 namespace Metalhead.SharesGainLossTracker.Core;
 
-public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> progress) : IStock
+public partial class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> progress) : IStock
 {
     public ILogger<AlphaVantage> Log { get; } = log;
     public IProgress<ProgressLog> Progress { get; } = progress;
@@ -20,6 +21,7 @@ public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> prog
         List<AlphaVantageRoot> stocks = [];
         var hadDeserializingErrors = false;
         var hadRateLimitError = false;
+        var hadDailyLimitError = false;
         var hadInvalidApiCall = false;
 
         foreach (var item in httpResponseMessages)
@@ -37,6 +39,10 @@ public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> prog
                     {
                         hadRateLimitError = true;
                     }
+                    else if (stock is not null && stock.Information is not null && DailyLimitRegex().IsMatch(stock.Information))
+                    {
+                        hadDailyLimitError = true;
+                    }
                     else if (stock is not null && stock.ErrorMessage is not null && stock.ErrorMessage.StartsWith("Invalid API call."))
                     {
                         hadInvalidApiCall = true;
@@ -53,6 +59,11 @@ public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> prog
         {
             Log.LogError("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilleseconds setting.");
             Progress.Report(new ProgressLog(MessageImportance.Bad, "Rate limit error from stocks API. Try increasing ApiDelayPerCallMilleseconds setting."));
+        }
+        if (hadDailyLimitError)
+        {
+            Log.LogError("Daily API call limit exceeded error from stocks API. Your AlphaVantage plan may need upgrading.");
+            Progress.Report(new ProgressLog(MessageImportance.Bad, "Daily API call limit exceeded error from stocks API. Your AlphaVantage plan may need upgrading."));
         }
         if (hadInvalidApiCall)
         {
@@ -76,14 +87,17 @@ public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> prog
         {
             foreach (var stock in stocks.Where(s => s.MetaData is not null && s.Data != null))
             {
-                foreach (var data in stock.Data)
+                foreach (var data in stock.Data!)
                 {
                     var close = closeValueIsAdjusted ? Convert.ToDouble(data.Value.AdjustedClose) : Convert.ToDouble(data.Value.Close);
-                    flattenedStocks.Add(new FlattenedStock(DateTime.Parse(data.Key), stock.MetaData.Symbol, close));
+                    flattenedStocks.Add(new FlattenedStock(DateTime.Parse(data.Key), stock.MetaData!.Symbol, close));
                 }
             }
         }
 
         return flattenedStocks;
     }
+
+    [GeneratedRegex(@"API rate limit is \d+ requests per day", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex DailyLimitRegex();
 }
