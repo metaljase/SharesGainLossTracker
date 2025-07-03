@@ -6,7 +6,9 @@ SharesGainLossTracker will create an Excel Workbook file containing two Workshee
 
 The gain/loss percentage is calculated by comparing the share purchase price, and the end-of-day close or adjusted close price.  The shares you want to track, and the purchase price, should be specified in a CSV file.  Shares you want to track can be split-up into different groups resulting in a seperate Excel Workbook for each group.
 
-SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack.com](https://marketstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=metaljase) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  API calls are rate limited to a certain amount of calls per milliesecond/day.
+SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack.com](https://marketstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=metaljase) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  Marketstack and Alpha Vantage rate limit calls to their APIs to a certain amount of calls per milliesecond/day.
+
+At the time of writing, Marketstack's free tier includes calls to their API endpoint that returns both the close and adjusted close prices, whereas Alpha Vantage's free tier only returns the close price; their paid tier includes the adjusted close price.
 
 You will need to sign up to a free (or paid) tier, which will give you a key to access their API.  This key needs to be inserted into the `appsettings` file.
 
