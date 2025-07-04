@@ -87,7 +87,7 @@ jobs:
         run: Compress-Archive -Path ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/*.* -DestinationPath ${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
   
       - name: Upload console app publish files
-        uses: actions/upload-artifact@4
+        uses: actions/upload-artifact@v4
         with:
           name: ConsoleAppFiles
           path: |
