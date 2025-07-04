@@ -188,13 +188,13 @@ jobs:
     steps:
 
     - name: Download console app files
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ConsoleAppFiles
         path: console-app-files
 
     - name: Download WPF app files
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: WpfAppFiles
         path: wpf-app-files
