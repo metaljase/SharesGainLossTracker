@@ -7,7 +7,7 @@ on:
 
 env:
   DotNetRuntimeURL: https://dotnet.microsoft.com/download/dotnet/8.0
-  DotNetRuntimeVersion: 8.0
+  DotNetRuntimeVersion: "8.0"
   ConsoleApp_NS: Metalhead.SharesGainLossTracker.ConsoleApp
   ConsoleApp_EXE: SharesGainLossTracker.ConsoleApp
   ConsoleApp_TF: net8.0
