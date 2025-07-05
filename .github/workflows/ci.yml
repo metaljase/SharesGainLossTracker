@@ -6,6 +6,8 @@ on:
       - "v*"
 
 env:
+  DotNetRuntimeURL: https://dotnet.microsoft.com/download/dotnet/8.0
+  DotNetRuntimeVersion: 8.0
   ConsoleApp_NS: Metalhead.SharesGainLossTracker.ConsoleApp
   ConsoleApp_EXE: SharesGainLossTracker.ConsoleApp
   ConsoleApp_TF: net8.0
@@ -76,6 +78,8 @@ jobs:
         run: dotnet publish ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish
       - name: Rename ${{ env.ConsoleApp_NS }}.exe to ${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/${{ env.ConsoleApp_NS }}.exe ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
+      - name: Create text file advising .NET Runtime installation
+        run: echo "This version does NOT include the .NET {{ env.DotNetRuntimeVersion }} Runtime. If this is not already installed, you must download and install the .NET {{ env.DotNetRuntimeVersion }} Runtime from {{ env.DotNetRuntimeURL }}." > ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/IMPORTANT.txt
       - name: Zip ${{ env.ConsoleApp_NS }} win-x64 published files.
         run: Compress-Archive -Path ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/*.* -DestinationPath ${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
 
@@ -83,6 +87,8 @@ jobs:
         run: dotnet publish ${{ env.ConsoleApp_NS }}/${{ env.ConsoleApp_NS }}.csproj -c Release -r win-x86 --no-self-contained -p:PublishSingleFile=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish
       - name: Rename ${{ env.ConsoleApp_NS }}.exe to ${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/${{ env.ConsoleApp_NS }}.exe ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
+      - name: Create text file advising .NET Runtime installation
+        run: echo "This version does NOT include the .NET {{ env.DotNetRuntimeVersion }} Runtime. If this is not already installed, you must download and install the .NET {{ env.DotNetRuntimeVersion }} Runtime from {{ env.DotNetRuntimeURL }}." > ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/IMPORTANT.txt
       - name: Zip ${{ env.ConsoleApp_NS }} win-x86 published files.
         run: Compress-Archive -Path ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/*.* -DestinationPath ${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
   
