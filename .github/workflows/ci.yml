@@ -79,7 +79,7 @@ jobs:
       - name: Rename ${{ env.ConsoleApp_NS }}.exe to ${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/${{ env.ConsoleApp_NS }}.exe ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.exe
       - name: Create text file advising .NET Runtime installation
-        run: echo "This version does NOT include the .NET {{ env.DotNetRuntimeVersion }} Runtime. If this is not already installed, you must download and install the .NET {{ env.DotNetRuntimeVersion }} Runtime from {{ env.DotNetRuntimeURL }}." > ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/IMPORTANT.txt
+        run: echo "This version does NOT include the .NET ${{ env.DotNetRuntimeVersion }} Runtime. If this is not already installed, you must download and install the .NET ${{ env.DotNetRuntimeVersion }} Runtime from ${{ env.DotNetRuntimeURL }}." > ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/IMPORTANT.txt
       - name: Zip ${{ env.ConsoleApp_NS }} win-x64 published files.
         run: Compress-Archive -Path ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/*.* -DestinationPath ${{ env.ConsoleApp_EXE }}-win-x64-without-runtime-${{ github.ref_name }}.zip
 
@@ -88,7 +88,7 @@ jobs:
       - name: Rename ${{ env.ConsoleApp_NS }}.exe to ${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
         run: mv ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/${{ env.ConsoleApp_NS }}.exe ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.exe
       - name: Create text file advising .NET Runtime installation
-        run: echo "This version does NOT include the .NET {{ env.DotNetRuntimeVersion }} Runtime. If this is not already installed, you must download and install the .NET {{ env.DotNetRuntimeVersion }} Runtime from {{ env.DotNetRuntimeURL }}." > ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x64/non-self/publish/IMPORTANT.txt
+        run: echo "This version does NOT include the .NET ${{ env.DotNetRuntimeVersion }} Runtime. If this is not already installed, you must download and install the .NET ${{ env.DotNetRuntimeVersion }} Runtime from ${{ env.DotNetRuntimeURL }}." > ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/IMPORTANT.txt
       - name: Zip ${{ env.ConsoleApp_NS }} win-x86 published files.
         run: Compress-Archive -Path ${{ env.ConsoleApp_NS }}/bin/Release/${{ env.ConsoleApp_TF }}/win-x86/non-self/publish/*.* -DestinationPath ${{ env.ConsoleApp_EXE }}-win-x86-without-runtime-${{ github.ref_name }}.zip
   
