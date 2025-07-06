@@ -5,13 +5,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 
 using Metalhead.SharesGainLossTracker.Core.Models;
 
 namespace Metalhead.SharesGainLossTracker.Core;
 
-public partial class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> progress) : IStock
+public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> progress) : IStock
 {
     public ILogger<AlphaVantage> Log { get; } = log;
     public IProgress<ProgressLog> Progress { get; } = progress;
@@ -23,6 +22,7 @@ public partial class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressL
         var hadRateLimitError = false;
         var hadDailyLimitError = false;
         var hadInvalidApiCall = false;
+        var hadPaidTierOnlyError = false;
 
         foreach (var item in httpResponseMessages)
         {
@@ -35,15 +35,19 @@ public partial class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressL
                 }
                 else
                 {
-                    if (stock is not null && stock.Note is not null && stock.Note.EndsWith("if you would like to target a higher API call frequency."))
+                    if (stock is not null && !string.IsNullOrWhiteSpace(stock.Note) && stock.Note.EndsWith("if you would like to target a higher API call frequency."))
                     {
                         hadRateLimitError = true;
                     }
-                    else if (stock is not null && stock.Information is not null && DailyLimitRegex().IsMatch(stock.Information))
+                    else if (stock is not null && !string.IsNullOrWhiteSpace(stock.Information) && stock.Information.EndsWith("to instantly remove all daily rate limits."))
                     {
                         hadDailyLimitError = true;
                     }
-                    else if (stock is not null && stock.ErrorMessage is not null && stock.ErrorMessage.StartsWith("Invalid API call."))
+                    else if (stock is not null && !string.IsNullOrWhiteSpace(stock.Information) && stock.Information.Contains("This is a premium endpoint"))
+                    {
+                        hadPaidTierOnlyError = true;
+                    }
+                    else if (stock is not null && !string.IsNullOrWhiteSpace(stock.ErrorMessage) && stock.ErrorMessage.StartsWith("Invalid API call."))
                     {
                         hadInvalidApiCall = true;
                     }
@@ -62,8 +66,13 @@ public partial class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressL
         }
         if (hadDailyLimitError)
         {
-            Log.LogError("Daily API call limit exceeded error from stocks API. Your AlphaVantage plan may need upgrading.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Daily API call limit exceeded error from stocks API. Your AlphaVantage plan may need upgrading."));
+            Log.LogError("Daily API call limit exceeded error from stocks API. Your Alpha Vantage plan may need upgrading.");
+            Progress.Report(new ProgressLog(MessageImportance.Bad, "Daily API call limit exceeded error from stocks API. Your Alpha Vantage plan may need upgrading."));
+        }
+        if (hadPaidTierOnlyError)
+        {
+            Log.LogError("Paid tier only error from stocks API. You need to upgrade your Alpha Vantage plan to use this API endpoint.");
+            Progress.Report(new ProgressLog(MessageImportance.Bad, "Paid tier only error from stocks API. You need to upgrade your Alpha Vantage plan to use this API endpoint."));
         }
         if (hadInvalidApiCall)
         {
@@ -73,7 +82,7 @@ public partial class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressL
         if (hadDeserializingErrors)
         {
             Log.LogError("Error deserializing data from stocks API.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Received unexpected data from stocks API."));
+            Progress.Report(new ProgressLog(MessageImportance.Bad, "Error deserializing data from stocks API."));
         }
 
         return GetFlattenedStocks(stocks, endpointReturnsAdjustedClose);
@@ -97,7 +106,4 @@ public partial class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressL
 
         return flattenedStocks;
     }
-
-    [GeneratedRegex(@"API rate limit is \d+ requests per day", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
-    private static partial Regex DailyLimitRegex();
 }
