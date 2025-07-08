@@ -10,7 +10,7 @@ namespace Metalhead.SharesGainLossTracker.Core.Services;
 public interface IStocksDataService
 {
     Task<HttpResponseMessage[]> FetchStocksDataAsync(AsyncRetryPolicy pollyPolicy, string stocksApiUrl, int apiDelayPerCallMilliseconds, List<Share> sharesInput);
-    AsyncRetryPolicy GetRetryPolicy(int apiDelayPerCallMillieseconds);
+    AsyncRetryPolicy GetRetryPolicy(int apiDelayPerCallMilliseconds);
     IStock GetStock(string model);
     bool IsExpectedStocksDataMapped(List<FlattenedStock> flattenedStocks, List<Share> sharesInput);
 }

@@ -18,15 +18,15 @@ public class SharesOutputService(ILogger<SharesOutputService> log, IProgress<Pro
     private ISharesInputHelperWrapper SharesInputHelper { get; } = sharesInputHelperWrapper;
     private ISharesOutputHelperWrapper SharesOutputHelper { get; } = sharesOutputHelperWrapper;
 
-    public async Task<List<ShareOutput>?> CreateSharesOutputAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, bool endpointReturnsAdjustedClose, int apiDelayPerCallMillieseconds, bool orderByDateDescending, bool appendPriceToStockName)
+    public async Task<List<ShareOutput>?> CreateSharesOutputAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, bool endpointReturnsAdjustedClose, int apiDelayPerCallMilliseconds, bool orderByDateDescending, bool appendPriceToStockName)
     {
         Log.LogInformation("Processing input file: {SharesInputFileFullPath}", sharesInputFileFullPath);
         Progress.Report(new ProgressLog(MessageImportance.Normal, $"Processing input file: {sharesInputFileFullPath}"));
 
         IStock stocks = StocksDataService.GetStock(model);
         var sharesInput = ShareInputLoader.CreateSharesInput(sharesInputFileFullPath);
-        var pollyPolicy = StocksDataService.GetRetryPolicy(apiDelayPerCallMillieseconds);
-        var httpResponseMessages = await StocksDataService.FetchStocksDataAsync(pollyPolicy, stocksApiUrl, apiDelayPerCallMillieseconds, sharesInput);
+        var pollyPolicy = StocksDataService.GetRetryPolicy(apiDelayPerCallMilliseconds);
+        var httpResponseMessages = await StocksDataService.FetchStocksDataAsync(pollyPolicy, stocksApiUrl, apiDelayPerCallMilliseconds, sharesInput);
 
         // Map the data from the API using the appropriate model.
         var flattenedStocks = await stocks.GetStocksDataAsync(httpResponseMessages, endpointReturnsAdjustedClose);

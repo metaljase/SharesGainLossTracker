@@ -21,9 +21,9 @@ public class ExcelWorkbookCreatorService(ILogger<ExcelWorkbookCreatorService> lo
     private IFileStreamFactory FileStreamFactory { get; } = fileStreamFactory;
     private ISharesOutputDataTableHelperWrapper SharesOutputDataTableHelper { get; } = sharesOutputDataTableHelper;
 
-    public async Task<string?> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, bool endpointReturnsAdjustedClose, int apiDelayPerCallMillieseconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
+    public async Task<string?> CreateWorkbookAsync(string model, string sharesInputFileFullPath, string stocksApiUrl, bool endpointReturnsAdjustedClose, int apiDelayPerCallMilliseconds, bool orderByDateDescending, string outputFilePath, string outputFilenamePrefix, bool appendPriceToStockName)
     {
-        var sharesOutput = await SharesOutputService.CreateSharesOutputAsync(model, sharesInputFileFullPath, stocksApiUrl, endpointReturnsAdjustedClose, apiDelayPerCallMillieseconds, orderByDateDescending, appendPriceToStockName);
+        var sharesOutput = await SharesOutputService.CreateSharesOutputAsync(model, sharesInputFileFullPath, stocksApiUrl, endpointReturnsAdjustedClose, apiDelayPerCallMilliseconds, orderByDateDescending, appendPriceToStockName);
 
         if (sharesOutput is null)
         {

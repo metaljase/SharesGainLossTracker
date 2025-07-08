@@ -33,7 +33,7 @@ public class SharesOutputServiceTests
         var sharesInputFileFullPath = "My Shares.csv";
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
         var endpointReturnsAdjustedClose = true;
-        var apiDelayPerCallMillieseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var orderByDateDescending = true;
         var appendPriceToStockName = true;
 
@@ -76,7 +76,7 @@ public class SharesOutputServiceTests
             sharesInputFileFullPath,
             stocksApiUrl,
             endpointReturnsAdjustedClose,
-            apiDelayPerCallMillieseconds,
+            apiDelayPerCallMilliseconds,
             orderByDateDescending,
             appendPriceToStockName);
 
@@ -109,7 +109,7 @@ public class SharesOutputServiceTests
         var sharesInputFileFullPath = "My Shares.csv";
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
         var endpointReturnsAdjustedClose = true;
-        var apiDelayPerCallMillieseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var orderByDateDescending = true;
         var appendPriceToStockName = true;
 
@@ -154,7 +154,7 @@ public class SharesOutputServiceTests
             sharesInputFileFullPath,
             stocksApiUrl,
             endpointReturnsAdjustedClose,
-            apiDelayPerCallMillieseconds,
+            apiDelayPerCallMilliseconds,
             orderByDateDescending,
             appendPriceToStockName);
 

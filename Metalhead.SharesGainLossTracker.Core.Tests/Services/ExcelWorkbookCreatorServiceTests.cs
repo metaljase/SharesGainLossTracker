@@ -35,7 +35,7 @@ public class ExcelWorkbookCreatorServiceTests
         // Arrange
         var sharesInputFileFullPath = "My Shares.csv";
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
-        var apiDelayPerCallMillieseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var orderByDateDescending = true;
         var outputFilePath = @"C:\Temp\";
         var outputFilenamePrefix = "My Shares ";
@@ -43,7 +43,7 @@ public class ExcelWorkbookCreatorServiceTests
         var closeDataTableName = endpointReturnsAdjustedClose ? "Adjusted Close" : "Close";
 
         _mockSharesOutputService
-            .Setup(x => x.CreateSharesOutputAsync("IStockProxy", sharesInputFileFullPath, stocksApiUrl, endpointReturnsAdjustedClose, apiDelayPerCallMillieseconds, orderByDateDescending, appendPriceToStockName))
+            .Setup(x => x.CreateSharesOutputAsync("IStockProxy", sharesInputFileFullPath, stocksApiUrl, endpointReturnsAdjustedClose, apiDelayPerCallMilliseconds, orderByDateDescending, appendPriceToStockName))
             .ReturnsAsync(MockData.CreateSharesOutput())
             .Verifiable();
 
@@ -71,7 +71,7 @@ public class ExcelWorkbookCreatorServiceTests
             sharesInputFileFullPath,
             stocksApiUrl,
             endpointReturnsAdjustedClose,
-            apiDelayPerCallMillieseconds,
+            apiDelayPerCallMilliseconds,
             orderByDateDescending,
             outputFilePath,
             outputFilenamePrefix,
@@ -103,7 +103,7 @@ public class ExcelWorkbookCreatorServiceTests
         var sharesInputFileFullPath = "My Shares.csv";
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
         var endpointReturnsAdjustedClose = true;
-        var apiDelayPerCallMillieseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var orderByDateDescending = true;
         var outputFilePath = @"C:\Temp\";
         var outputFilenamePrefix = "My Shares ";
@@ -130,7 +130,7 @@ public class ExcelWorkbookCreatorServiceTests
             sharesInputFileFullPath,
             stocksApiUrl,
             endpointReturnsAdjustedClose,
-            apiDelayPerCallMillieseconds,
+            apiDelayPerCallMilliseconds,
             orderByDateDescending,
             outputFilePath,
             outputFilenamePrefix,
