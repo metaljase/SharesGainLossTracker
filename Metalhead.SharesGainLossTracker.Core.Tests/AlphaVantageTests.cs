@@ -35,13 +35,13 @@ public class AlphaVantageTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Equals("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilleseconds setting.")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Equals("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilliseconds setting.")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
         Assert.NotNull(reportedLog);
         Assert.Equal(MessageImportance.Bad, reportedLog.Importance);
-        Assert.Equal("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilleseconds setting.", reportedLog.DownloadLog);
+        Assert.Equal("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilliseconds setting.", reportedLog.DownloadLog);
         Assert.Empty(result);
     }
 

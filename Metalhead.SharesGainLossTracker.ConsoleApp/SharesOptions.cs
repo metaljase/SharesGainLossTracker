@@ -21,6 +21,20 @@ public class SharesGroup
     public string? SymbolsFullPath { get; set; } = null;
     public string? ApiUrl { get; set; } = null;
     public bool EndpointReturnsAdjustedClose { get; set; }
-    public int ApiDelayPerCallMilleseconds { get; set; }        
+
+    private int _apiDelayPerCallMilliseconds;
+
+    public int ApiDelayPerCallMilleseconds
+    {
+        get => _apiDelayPerCallMilliseconds;
+        set => _apiDelayPerCallMilliseconds = value;
+    }
+
+    public int ApiDelayPerCallMilliseconds
+    {
+        get => _apiDelayPerCallMilliseconds;
+        set => _apiDelayPerCallMilliseconds = value;
+    }
+
     public bool OrderByDateDescending { get; set; }
 }

@@ -36,7 +36,7 @@ public class App(ILogger<App> log, SharesOptions sharesOptions, IExcelWorkbookCr
                 symbolsFullPath,
                 shareGroup.ApiUrl!,
                 shareGroup.EndpointReturnsAdjustedClose,
-                shareGroup.ApiDelayPerCallMilleseconds,
+                shareGroup.ApiDelayPerCallMilliseconds,
                 shareGroup.OrderByDateDescending,
                 outputFilePath,
                 shareGroup.OutputFilenamePrefix,

@@ -6,7 +6,7 @@ SharesGainLossTracker will create an Excel Workbook file containing two Workshee
 
 The gain/loss percentage is calculated by comparing the share purchase price, and the end-of-day close or adjusted close price.  The shares you want to track, and the purchase price, should be specified in a CSV file.  Shares you want to track can be split-up into different groups resulting in a seperate Excel Workbook for each group.
 
-SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack.com](https://marketstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=metaljase) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  Marketstack and Alpha Vantage rate limit calls to their APIs to a certain amount of calls per milliesecond/day.
+SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack.com](https://marketstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=metaljase) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  Marketstack and Alpha Vantage rate limit calls to their APIs to a certain amount of calls per millisecond/day.
 
 At the time of writing, Marketstack's free tier includes calls to their API endpoint that returns both the close and adjusted close prices, whereas Alpha Vantage's free tier only returns the close price; their paid tier includes the adjusted close price.
 
@@ -45,7 +45,7 @@ Open the `appsettings.json` file (or `appsettings.Development.json` if running i
 | OutputFilenamePrefix                 | The Excel filename will be a date/time stamp. A prefix can be specified.
 | SymbolsFullPath                      | Path and filename of the CSV file containing shares and purchase prices to be tracked.
 | ApiUrl                               | URL of 3rd party stocks API.  Replace `<API KEY>` with your API key.
-| ApiDelayPerCallMillieseconds         | Delay between API calls to keep within rate limit. One API call per stock.
+| ApiDelayPerCallMilliseconds          | Delay between API calls to keep within rate limit. One API call per stock.
 | EndpointReturnsAdjustedClose         | `true` or `false` sets whether or not the API endpoint returns an adjusted close price.
 | OrderByDateDescending                | `true` or `false` sets whether to sort dates in Excel file in ascending or descending order.
 

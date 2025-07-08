@@ -96,9 +96,9 @@ public class SharesValidation(IConfiguration config) : IValidateOptions<SharesOp
                     validationResults.Add(new ValidationResult($"{nameof(SharesGroup.ApiUrl)} specified in app settings is not a valid URL."));
                 }
 
-                if (group.ApiDelayPerCallMilleseconds < 0)
+                if (group.ApiDelayPerCallMilliseconds < 0)
                 {
-                    validationResults.Add(new ValidationResult($"{nameof(SharesGroup.ApiDelayPerCallMilleseconds)} cannot be less than 0."));
+                    validationResults.Add(new ValidationResult($"{nameof(SharesGroup.ApiDelayPerCallMilliseconds)} cannot be less than 0."));
                 }
             }
         }

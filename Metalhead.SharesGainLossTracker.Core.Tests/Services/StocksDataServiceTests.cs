@@ -206,7 +206,7 @@ public class StocksDataServiceTests
     {
         // Arrange
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
-        var apiDelayPerCallMilleseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var sharesInput = MockData.CreateSharesInput();
 
         _mockHttpMessageHandler
@@ -220,7 +220,7 @@ public class StocksDataServiceTests
         _mockSharesInputHelperWrapper.Setup(x => x.GetDistinctSymbolsNames(sharesInput)).Returns(MockData.CreateSharesInput());
 
         // Act
-        var result = await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilleseconds, sharesInput);
+        var result = await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilliseconds, sharesInput);
 
         // Assert
         Assert.NotNull(result);
@@ -234,7 +234,7 @@ public class StocksDataServiceTests
     {
         // Arrange
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
-        var apiDelayPerCallMilleseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var sharesInput = MockData.CreateSharesInput();
 
         var expectedHttpResponseMessage1 = new HttpResponseMessage(HttpStatusCode.OK);
@@ -257,7 +257,7 @@ public class StocksDataServiceTests
         _mockSharesInputHelperWrapper.Setup(x => x.GetDistinctSymbolsNames(sharesInput)).Returns(MockData.CreateSharesInput());
 
         // Act
-        var result = await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilleseconds, sharesInput);
+        var result = await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilliseconds, sharesInput);
 
         // Assert
         Assert.Equal(2, result.Length);
@@ -272,7 +272,7 @@ public class StocksDataServiceTests
     {
         // Arrange
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
-        var apiDelayPerCallMilleseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var sharesInput = MockData.CreateSharesInput();
 
         _mockHttpMessageHandler
@@ -283,7 +283,7 @@ public class StocksDataServiceTests
         _mockSharesInputHelperWrapper.Setup(x => x.GetDistinctSymbolsNames(sharesInput)).Returns(MockData.CreateSharesInput());
 
         // Act
-        var result = await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilleseconds, sharesInput);
+        var result = await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilliseconds, sharesInput);
 
         // Assert
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.Equals("Error fetching stocks data.  Reached maximum retries."))), Times.Once);
@@ -295,7 +295,7 @@ public class StocksDataServiceTests
     {
         // Arrange
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
-        var apiDelayPerCallMilleseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var sharesInput = MockData.CreateSharesInput();
 
         _mockHttpMessageHandler
@@ -306,7 +306,7 @@ public class StocksDataServiceTests
         _mockSharesInputHelperWrapper.Setup(x => x.GetDistinctSymbolsNames(sharesInput)).Returns(MockData.CreateSharesInput());
 
         // Act
-        var result = await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilleseconds, sharesInput);
+        var result = await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilliseconds, sharesInput);
 
         // Assert
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.Equals("Error fetching stocks data.  Reached maximum retries."))), Times.Once);
@@ -318,7 +318,7 @@ public class StocksDataServiceTests
     {
         // Arrange
         string? stocksApiUrl = null;
-        var apiDelayPerCallMilleseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var sharesInput = MockData.CreateSharesInput();
 
         _mockHttpMessageHandler
@@ -327,7 +327,7 @@ public class StocksDataServiceTests
             .ThrowsAsync(new ArgumentNullException());
 
         // Act and Assert
-        var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () => await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl!, apiDelayPerCallMilleseconds, sharesInput));
+        var ex = await Assert.ThrowsAsync<ArgumentNullException>(async () => await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl!, apiDelayPerCallMilliseconds, sharesInput));
         Assert.IsType<ArgumentNullException>(ex);
         Assert.Equal("uri", ex.ParamName);
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.Equals($"URL for stocks API is invalid: {stocksApiUrl}"))), Times.Once);
@@ -340,7 +340,7 @@ public class StocksDataServiceTests
     public async Task FetchStocksDataAsync_ThrowsArgumentException_GivenInvalidUrl(string stocksApiUrl)
     {
         // Arrange
-        var apiDelayPerCallMilleseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var sharesInput = MockData.CreateSharesInput();
 
         _mockHttpMessageHandler
@@ -349,7 +349,7 @@ public class StocksDataServiceTests
             .ThrowsAsync(new ArgumentException("uri"));
 
         // Act and Assert
-        var ex = await Assert.ThrowsAsync<ArgumentException>(async () => await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilleseconds, sharesInput));
+        var ex = await Assert.ThrowsAsync<ArgumentException>(async () => await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilliseconds, sharesInput));
         Assert.IsType<ArgumentException>(ex);
         Assert.Equal("uri", ex.ParamName);
         _mockProgress.Verify(x => x.Report(It.Is<ProgressLog>(log => log.Importance == MessageImportance.Bad && log.DownloadLog.Equals($"URL for stocks API is invalid: {stocksApiUrl}"))), Times.Once);
@@ -361,7 +361,7 @@ public class StocksDataServiceTests
     {
         // Arrange
         var stocksApiUrl = "https://api.examplestocksapi.com/v1/eod?symbols={0}";
-        var apiDelayPerCallMilleseconds = 0;
+        var apiDelayPerCallMilliseconds = 0;
         var sharesInput = MockData.CreateSharesInput();
 
         _mockHttpMessageHandler
@@ -372,7 +372,7 @@ public class StocksDataServiceTests
         _mockSharesInputHelperWrapper.Setup(x => x.GetDistinctSymbolsNames(sharesInput)).Returns(MockData.CreateSharesInput());
 
         // Act and Assert
-        var ex = await Assert.ThrowsAsync<AggregateException>(async () => await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilleseconds, sharesInput));
+        var ex = await Assert.ThrowsAsync<AggregateException>(async () => await _sut.FetchStocksDataAsync(_pollyPolicy, stocksApiUrl, apiDelayPerCallMilliseconds, sharesInput));
         Assert.IsType<Exception>(ex.InnerException);
     }
 

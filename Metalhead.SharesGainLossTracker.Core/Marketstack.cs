@@ -41,8 +41,8 @@ public class Marketstack(ILogger<Marketstack> log, IProgress<ProgressLog> progre
 
         if (hadDeserializingErrors)
         {
-            Log.LogError("Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Encountered deserialization errors. Try increasing ApiDelayPerCallMilleseconds setting."));
+            Log.LogError("Encountered deserialization errors. Try increasing ApiDelayPerCallMilliseconds setting.");
+            Progress.Report(new ProgressLog(MessageImportance.Bad, "Encountered deserialization errors. Try increasing ApiDelayPerCallMilliseconds setting."));
         }
 
         return GetFlattenedStocks(stocks, endpointReturnsAdjustedClose);

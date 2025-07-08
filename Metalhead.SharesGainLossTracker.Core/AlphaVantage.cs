@@ -61,8 +61,8 @@ public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> prog
 
         if (hadRateLimitError)
         {
-            Log.LogError("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilleseconds setting.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Rate limit error from stocks API. Try increasing ApiDelayPerCallMilleseconds setting."));
+            Log.LogError("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilliseconds setting.");
+            Progress.Report(new ProgressLog(MessageImportance.Bad, "Rate limit error from stocks API. Try increasing ApiDelayPerCallMilliseconds setting."));
         }
         if (hadDailyLimitError)
         {

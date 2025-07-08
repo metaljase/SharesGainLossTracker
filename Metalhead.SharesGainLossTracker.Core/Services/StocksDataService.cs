@@ -34,18 +34,18 @@ public class StocksDataService(ILogger<StocksDataService> log, IProgress<Progres
         return stockModel;
     }
 
-    public AsyncRetryPolicy GetRetryPolicy(int apiDelayPerCallMilleseconds)
+    public AsyncRetryPolicy GetRetryPolicy(int apiDelayPerCallMilliseconds)
     {
         return Policy
             .HandleInner<HttpRequestException>()
             .OrInner<TaskCanceledException>()
             .WaitAndRetryAsync(
             [
-                TimeSpan.FromMilliseconds(Math.Max(0, apiDelayPerCallMilleseconds)),
-                TimeSpan.FromMilliseconds(Math.Max(1000, apiDelayPerCallMilleseconds)),
-                TimeSpan.FromMilliseconds(Math.Max(5000, apiDelayPerCallMilleseconds)),
-                TimeSpan.FromMilliseconds(Math.Max(10000, apiDelayPerCallMilleseconds)),
-                TimeSpan.FromMilliseconds(Math.Max(30000, apiDelayPerCallMilleseconds))
+                TimeSpan.FromMilliseconds(Math.Max(0, apiDelayPerCallMilliseconds)),
+                TimeSpan.FromMilliseconds(Math.Max(1000, apiDelayPerCallMilliseconds)),
+                TimeSpan.FromMilliseconds(Math.Max(5000, apiDelayPerCallMilliseconds)),
+                TimeSpan.FromMilliseconds(Math.Max(10000, apiDelayPerCallMilliseconds)),
+                TimeSpan.FromMilliseconds(Math.Max(30000, apiDelayPerCallMilliseconds))
             ], (exception, timeSpan) =>
             {
                 Log.LogWarning(exception, "Error fetching stocks data.  Retrying in {RetryInMilliseconds} milliseconds.", timeSpan.TotalMilliseconds);
@@ -69,7 +69,7 @@ public class StocksDataService(ILogger<StocksDataService> log, IProgress<Progres
         }
     }
 
-    public async Task<HttpResponseMessage[]> FetchStocksDataAsync(AsyncRetryPolicy pollyPolicy, string stocksApiUrl, int apiDelayPerCallMilleseconds, List<Share> sharesInput)
+    public async Task<HttpResponseMessage[]> FetchStocksDataAsync(AsyncRetryPolicy pollyPolicy, string stocksApiUrl, int apiDelayPerCallMilliseconds, List<Share> sharesInput)
     {
         try
         {
@@ -94,7 +94,7 @@ public class StocksDataService(ILogger<StocksDataService> log, IProgress<Progres
                 httpResponseMessages.Add(await FetchStockDataAsync(pollyPolicy, stocksApiUrl, symbolName.Symbol, symbolName.StockName));
 
                 // Pause before the next API call to avoid hitting the rate limit.
-                await Task.Delay(new TimeSpan(0, 0, 0, 0, apiDelayPerCallMilleseconds));
+                await Task.Delay(new TimeSpan(0, 0, 0, 0, apiDelayPerCallMilliseconds));
             }
         }
         catch (Exception ex)

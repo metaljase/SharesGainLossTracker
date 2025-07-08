@@ -82,7 +82,7 @@ public partial class MainWindow : Window
                     symbolsFullPath,
                     shareGroup.ApiUrl,
                     shareGroup.EndpointReturnsAdjustedClose,
-                    shareGroup.ApiDelayPerCallMilleseconds,
+                    shareGroup.ApiDelayPerCallMilliseconds,
                     shareGroup.OrderByDateDescending,
                     outputFilePath,
                     shareGroup.OutputFilenamePrefix,
