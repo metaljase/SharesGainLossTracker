@@ -8,6 +8,8 @@ namespace Metalhead.SharesGainLossTracker.Core.Models;
 [JsonSerializable(typeof(AlphaVantageMetaData))]
 [JsonSerializable(typeof(MarketstackRoot))]
 [JsonSerializable(typeof(MarketstackData))]
+[JsonSerializable(typeof(MarketstackErrorRoot))]
+[JsonSerializable(typeof(MarketstackError))]
 public partial class MetadataDeSerializerContext : JsonSerializerContext
 {
 }
