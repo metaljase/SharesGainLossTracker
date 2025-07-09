@@ -21,8 +21,8 @@ public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> prog
         var hadDeserializingErrors = false;
         var hadRateLimitError = false;
         var hadDailyLimitError = false;
-        var hadInvalidApiCall = false;
-        var hadPaidTierOnlyError = false;
+        var hadInvalidEndpointError = false;
+        var hadEndpointAccessRestrictedError = false;
 
         foreach (var item in httpResponseMessages)
         {
@@ -45,11 +45,11 @@ public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> prog
                     }
                     else if (stock is not null && !string.IsNullOrWhiteSpace(stock.Information) && stock.Information.Contains("This is a premium endpoint"))
                     {
-                        hadPaidTierOnlyError = true;
+                        hadEndpointAccessRestrictedError = true;
                     }
                     else if (stock is not null && !string.IsNullOrWhiteSpace(stock.ErrorMessage) && stock.ErrorMessage.StartsWith("Invalid API call."))
                     {
-                        hadInvalidApiCall = true;
+                        hadInvalidEndpointError = true;
                     }
                     else
                     {
@@ -61,23 +61,23 @@ public class AlphaVantage(ILogger<AlphaVantage> log, IProgress<ProgressLog> prog
 
         if (hadRateLimitError)
         {
-            Log.LogError("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilliseconds setting.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Rate limit error from stocks API. Try increasing ApiDelayPerCallMilliseconds setting."));
+            Log.LogError("Rate limit exceeded error from stocks API.  Try increasing the ApiDelayPerCallMilliseconds setting.");
+            Progress.Report(new ProgressLog(MessageImportance.Bad, "Rate limit exceeded error from stocks API.  Try increasing the ApiDelayPerCallMilliseconds setting."));
         }
         if (hadDailyLimitError)
         {
-            Log.LogError("Daily API call limit exceeded error from stocks API. Your Alpha Vantage plan may need upgrading.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Daily API call limit exceeded error from stocks API. Your Alpha Vantage plan may need upgrading."));
+            Log.LogError("Daily API calls limit reached error from stocks API.  Plans with a higher limit may be available.");
+            Progress.Report(new ProgressLog(MessageImportance.Bad, "Daily API calls limit reached error from stocks API.  Plans with a higher limit may be available."));
         }
-        if (hadPaidTierOnlyError)
+        if (hadEndpointAccessRestrictedError)
         {
-            Log.LogError("Paid tier only error from stocks API. You need to upgrade your Alpha Vantage plan to use this API endpoint.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Paid tier only error from stocks API. You need to upgrade your Alpha Vantage plan to use this API endpoint."));
+            Log.LogError("Access restricted error from stocks API.  Your plan may need upgrading to use this API endpoint.");
+            Progress.Report(new ProgressLog(MessageImportance.Bad, "Access restricted error from stocks API.  Your plan may need upgrading to use this API endpoint."));
         }
-        if (hadInvalidApiCall)
+        if (hadInvalidEndpointError)
         {
-            Log.LogError("Invalid API call error from stocks API. Possible incorrect stock symbol in shares input file.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Invalid API call error from stocks API. Possible incorrect stock symbol in shares input file."));
+            Log.LogError("Invalid endpoint error from stocks API.  Verify the endpoint URL is correct, especially the stock symbol.");
+            Progress.Report(new ProgressLog(MessageImportance.Bad, "Invalid endpoint error from stocks API.  Verify the endpoint URL is correct, especially the stock symbol."));
         }
         if (hadDeserializingErrors)
         {

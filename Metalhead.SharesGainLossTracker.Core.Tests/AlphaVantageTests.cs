@@ -35,13 +35,13 @@ public class AlphaVantageTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Equals("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilliseconds setting.")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Equals("Rate limit exceeded error from stocks API.  Try increasing the ApiDelayPerCallMilliseconds setting.")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
         Assert.NotNull(reportedLog);
         Assert.Equal(MessageImportance.Bad, reportedLog.Importance);
-        Assert.Equal("Rate limit error from stocks API. Try increasing ApiDelayPerCallMilliseconds setting.", reportedLog.DownloadLog);
+        Assert.Equal("Rate limit exceeded error from stocks API.  Try increasing the ApiDelayPerCallMilliseconds setting.", reportedLog.DownloadLog);
         Assert.Empty(result);
     }
 
@@ -63,24 +63,24 @@ public class AlphaVantageTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Equals("Daily API call limit exceeded error from stocks API. Your Alpha Vantage plan may need upgrading.")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Equals("Daily API calls limit reached error from stocks API.  Plans with a higher limit may be available.")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
         Assert.NotNull(reportedLog);
         Assert.Equal(MessageImportance.Bad, reportedLog.Importance);
-        Assert.Equal("Daily API call limit exceeded error from stocks API. Your Alpha Vantage plan may need upgrading.", reportedLog.DownloadLog);
+        Assert.Equal("Daily API calls limit reached error from stocks API.  Plans with a higher limit may be available.", reportedLog.DownloadLog);
         Assert.Empty(result);
     }
 
     [Fact]
-    public async Task GetStocksDataAsync_WhenPaidTierOnlyError_LogsAndReportsError()
+    public async Task GetStocksDataAsync_WhenAccessRestrictedError_LogsAndReportsError()
     {
         // Arrange
         ProgressLog? reportedLog = null;
         _mockProgress.Setup(p => p.Report(It.IsAny<ProgressLog>()))
             .Callback<ProgressLog>(log => reportedLog = log);
-        var httpResponse = AlphaVantageMockData.CreateAlphaVantagePaidTierOnlyHttpResponse();
+        var httpResponse = AlphaVantageMockData.CreateAlphaVantageAccessRestrictedHttpResponse();
         var responses = new[] { httpResponse };
 
         // Act
@@ -91,24 +91,24 @@ public class AlphaVantageTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Equals("Paid tier only error from stocks API. You need to upgrade your Alpha Vantage plan to use this API endpoint.")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Equals("Access restricted error from stocks API.  Your plan may need upgrading to use this API endpoint.")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
         Assert.NotNull(reportedLog);
         Assert.Equal(MessageImportance.Bad, reportedLog.Importance);
-        Assert.Equal("Paid tier only error from stocks API. You need to upgrade your Alpha Vantage plan to use this API endpoint.", reportedLog.DownloadLog);
+        Assert.Equal("Access restricted error from stocks API.  Your plan may need upgrading to use this API endpoint.", reportedLog.DownloadLog);
         Assert.Empty(result);
     }
 
     [Fact]
-    public async Task GetStocksDataAsync_WhenInvalidApiCallError_LogsAndReportsError()
+    public async Task GetStocksDataAsync_WhenInvalidEndpointError_LogsAndReportsError()
     {
         // Arrange
         ProgressLog? reportedLog = null;
         _mockProgress.Setup(p => p.Report(It.IsAny<ProgressLog>()))
             .Callback<ProgressLog>(log => reportedLog = log);
-        var httpResponse = AlphaVantageMockData.CreateAlphaVantageInvalidApiCallHttpResponse();
+        var httpResponse = AlphaVantageMockData.CreateAlphaVantageInvalidEndpointHttpResponse();
         var responses = new[] { httpResponse };
 
         // Act
@@ -119,13 +119,13 @@ public class AlphaVantageTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Equals("Invalid API call error from stocks API. Possible incorrect stock symbol in shares input file.")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Equals("Invalid endpoint error from stocks API.  Verify the endpoint URL is correct, especially the stock symbol.")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
         Assert.NotNull(reportedLog);
         Assert.Equal(MessageImportance.Bad, reportedLog.Importance);
-        Assert.Equal("Invalid API call error from stocks API. Possible incorrect stock symbol in shares input file.", reportedLog.DownloadLog);
+        Assert.Equal("Invalid endpoint error from stocks API.  Verify the endpoint URL is correct, especially the stock symbol.", reportedLog.DownloadLog);
         Assert.Empty(result);
     }
 

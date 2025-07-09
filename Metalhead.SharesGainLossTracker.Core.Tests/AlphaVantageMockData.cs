@@ -2,7 +2,7 @@
 
 internal static class AlphaVantageMockData
 {
-    internal static HttpResponseMessage CreateAlphaVantagePaidTierOnlyHttpResponse()
+    internal static HttpResponseMessage CreateAlphaVantageAccessRestrictedHttpResponse()
     {
         return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
         {
@@ -26,7 +26,7 @@ internal static class AlphaVantageMockData
         };
     }
 
-    internal static HttpResponseMessage CreateAlphaVantageInvalidApiCallHttpResponse()
+    internal static HttpResponseMessage CreateAlphaVantageInvalidEndpointHttpResponse()
     {
         return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
         {
