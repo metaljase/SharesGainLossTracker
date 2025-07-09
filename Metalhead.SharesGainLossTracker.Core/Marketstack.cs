@@ -59,7 +59,8 @@ public class Marketstack(ILogger<Marketstack> log, IProgress<ProgressLog> progre
                         hadNoValidSymbolsError = true;
                     else if (error.Error.Code.Equals("rate_limit_reached", StringComparison.InvariantCultureIgnoreCase))
                         hadRateLimitError = true;
-                    else if (error.Error.Code.Equals("too_many_requests", StringComparison.InvariantCultureIgnoreCase))
+                    else if (error.Error.Code.Equals("too_many_requests", StringComparison.InvariantCultureIgnoreCase)
+                        || error.Error.Code.Equals("usage_limit_reached", StringComparison.InvariantCultureIgnoreCase))
                         hadMonthlyRequestsLimitError = true;
                     else
                         hadOtherError = true;
