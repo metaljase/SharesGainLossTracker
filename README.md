@@ -8,7 +8,7 @@ The gain/loss percentage is calculated by comparing the share purchase price, an
 
 SharesGainLossTracker uses 3rd party APIs for stocks data, and currently [Marketstack.com](https://marketstack.com?utm_source=FirstPromoter&utm_medium=Affiliate&fpr=metaljase) and [Alpha Vantage](https://www.alphavantage.co/) are supported.  They both offer free and paid tiers, and SharesGainLossTracker will work with their free tiers.  Marketstack and Alpha Vantage rate limit calls to their APIs to a certain amount of calls per millisecond/day.
 
-At the time of writing, Marketstack's free tier includes calls to their API endpoint that returns both the close and adjusted close prices, whereas Alpha Vantage's free tier only returns the close price; their paid tier includes the adjusted close price.
+At the time of writing, Marketstack's free tier includes calls to their API endpoint that returns both the close and adjusted close prices, whereas Alpha Vantage's free tier only returns the close price; their paid tier includes the adjusted close price.  NOTE: Alpha Vantage recently changed their API endpoint for their free tier, which previously returned the full 20+ years of historical data, by limiting it to the last 100 data points.
 
 You will need to sign up to a free (or paid) tier, which will give you a key to access their API.  This key needs to be inserted into the `appsettings` file.
 
@@ -23,7 +23,7 @@ OR
 
 1) Clone the SharesGainLossTracker repository.
 
-2) Open the .NET solution in Visual Studio 2022 (or a compatible alternative).
+2) Open the .NET solution in Visual Studio 2026 (or a compatible alternative).
 
 3) Perform the steps in the [configuration instructions section](#configuration-instructions).
 
@@ -54,10 +54,10 @@ Below are example CSV files that should be referenced in `appsettings.json` agai
 Marketstack:
 ```
 GOOGL,Alphabet Inc,89.50
-AZN.XLON,Astra Zeneca plc,80.43
-BP.XLON,B.P. plc,200.95
-BAG.XLON,Barr (AG),537.65
-CARD.XLON,Card Factory plc,140.19
+AZN.L,Astra Zeneca plc,80.43
+BP.L,B.P. plc,200.95
+BAG.L,Barr (AG),537.65
+CARD.L,Card Factory plc,140.19
 ```
 
 Alpha Vantage:
