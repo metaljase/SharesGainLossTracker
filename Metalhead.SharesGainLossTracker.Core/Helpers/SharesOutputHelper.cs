@@ -15,10 +15,10 @@ internal class SharesOutputHelper
         {
             // Get shares that match current stock symbol.  Multiple shares per stock may exist, e.g. with different purchase prices.
             var sharesForSymbol = sharesInput.Where(s => s.Symbol.Equals(flattenedStock.Symbol, StringComparison.OrdinalIgnoreCase));
+
             foreach (var shareForSymbol in sharesForSymbol)
-            {
-                sharesOutput.Add(new ShareOutput(shareForSymbol.StockName, shareForSymbol.Symbol, shareForSymbol.PurchasePrice, flattenedStock.Date, flattenedStock.Close));
-            }
+                sharesOutput.Add(new ShareOutput(
+                    shareForSymbol.StockName, shareForSymbol.Symbol, shareForSymbol.PurchasePrice, flattenedStock.Date, flattenedStock.Close));
         }
 
         return sharesOutput;

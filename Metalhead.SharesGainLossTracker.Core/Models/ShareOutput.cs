@@ -11,7 +11,6 @@ public class ShareOutput
     public double? Close { get; set; }
     public double? GainLoss { get; }
 
-
     public ShareOutput(string stockName, string symbol, double purchasePrice, DateTime date, double close)
     {
         StockName = stockName;
@@ -21,12 +20,8 @@ public class ShareOutput
         Close = close;
 
         if (purchasePrice == 0)
-        {
             GainLoss = (close > 0) ? 100 : 0;
-        }
         else
-        {
             GainLoss = Math.Round((close - purchasePrice) / purchasePrice * 100.0, 1);
-        }
     }
 }

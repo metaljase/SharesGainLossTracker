@@ -1,21 +1,21 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using System.Linq;
+using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
-using System;
-using System.Linq;
-using System.Reflection;
 
+using Metalhead.SharesGainLossTracker.ConsoleApp;
 using Metalhead.SharesGainLossTracker.Core;
 using Metalhead.SharesGainLossTracker.Core.FileSystem;
 using Metalhead.SharesGainLossTracker.Core.Helpers;
 using Metalhead.SharesGainLossTracker.Core.Models;
 using Metalhead.SharesGainLossTracker.Core.Services;
-
-using Metalhead.SharesGainLossTracker.ConsoleApp;
+using Metalhead.SharesGainLossTracker.Core.Validators;
 
 var builder = Host.CreateApplicationBuilder(args);
 // WARNING: When overriding appsettings.json with environment settings, be careful with arrays.  Different
@@ -27,7 +27,7 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .CreateLogger();
 
-builder.Services.AddOptions<SharesOptions>().Bind(builder.Configuration.GetSection(SharesOptions.SharesSettings));
+builder.Services.AddOptions<SharesOptions>().Bind(builder.Configuration.GetSection(SharesOptions.SectionName));
 builder.Services.AddSingleton<IValidateOptions<SharesOptions>, SharesValidation>();
 builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<SharesOptions>>().Value);
 
@@ -58,9 +58,9 @@ foreach (var stockApiSource in stockApiSources)
     builder.Services.AddSingleton(typeof(IStock), stockApiSource);
 #pragma warning restore IL2072 // Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.
 }
-        
+
 using var host = builder.Build();
-        
+
 using var serviceScope = host.Services.CreateScope();
 var serviceProvider = serviceScope.ServiceProvider;
 
@@ -71,13 +71,13 @@ try
 catch (Exception ex)
 {
     if (ex is OptionsValidationException)
-    {
-        Log.Logger.Fatal("Application exited due to invalid app settings:\r\n{ValidationErrors}", ex.Message.Replace("; ", Environment.NewLine));
-    }
+        Log.Logger.Fatal("""
+            Application exited due to invalid app settings:
+            {ValidationErrors}
+            """,
+            ex.Message.Replace("; ", Environment.NewLine));
     else
-    {
         Log.Logger.Fatal(ex, "Application exited unexpectedly.  See log file for details.");
-    }
 }
 finally
 {

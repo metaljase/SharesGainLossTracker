@@ -1,20 +1,17 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 using Metalhead.SharesGainLossTracker.Core.Models;
 
 namespace Metalhead.SharesGainLossTracker.Core;
 
-public class Marketstack(ILogger<Marketstack> log, IProgress<ProgressLog> progress) : IStock
+public class Marketstack(ILogger<Marketstack> logger, IProgress<ProgressLog> progress) : IStock
 {
-    public ILogger<Marketstack> Log { get; } = log;
-    public IProgress<ProgressLog> Progress { get; } = progress;
-
     async Task<List<FlattenedStock>> IStock.GetStocksDataAsync(HttpResponseMessage[] httpResponseMessages, bool endpointReturnsAdjustedClose)
     {
         List<MarketstackRoot> stocks = [];
@@ -34,14 +31,10 @@ public class Marketstack(ILogger<Marketstack> log, IProgress<ProgressLog> progre
                 if (stock is not null && stock.Data is not null)
                 {
                     if (stock.Data.Length > 0)
-                    {
                         stocks.Add(stock);
-                    }
                 }
                 else
-                {
                     hadDeserializingError = true;
-                }
             }
             else
             {
@@ -70,38 +63,38 @@ public class Marketstack(ILogger<Marketstack> log, IProgress<ProgressLog> progre
 
         if (hadDeserializingError)
         {
-            Log.LogError("Error deserializing stocks data.  Try increasing the ApiDelayPerCallMilliseconds setting.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Error deserializing stocks data.  Try increasing the ApiDelayPerCallMilliseconds setting."));
+            logger.LogError("Error deserializing stocks data.  Try increasing the ApiDelayPerCallMilliseconds setting.");
+            progress.Report(new ProgressLog(MessageImportance.Bad, "Error deserializing stocks data.  Try increasing the ApiDelayPerCallMilliseconds setting."));
         }
         if (hadInvalidEndpointError)
         {
-            Log.LogError("Invalid endpoint error from stocks API.  Verify the endpoint URL is correct, especially the stock symbol.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Invalid endpoint error from stocks API.  Verify the endpoint URL is correct, especially the stock symbol."));
+            logger.LogError("Invalid endpoint error from stocks API.  Verify the endpoint URL is correct, especially the stock symbol.");
+            progress.Report(new ProgressLog(MessageImportance.Bad, "Invalid endpoint error from stocks API.  Verify the endpoint URL is correct, especially the stock symbol."));
         }
         if (hadEndpointAccessRestrictedError)
         {
-            Log.LogError("Access restricted error from stocks API.  Your plan may need upgrading to use this API endpoint.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Access restricted error from stocks API.  Your plan may need upgrading to use this API endpoint."));
+            logger.LogError("Access restricted error from stocks API.  Your plan may need upgrading to use this API endpoint.");
+            progress.Report(new ProgressLog(MessageImportance.Bad, "Access restricted error from stocks API.  Your plan may need upgrading to use this API endpoint."));
         }
         if (hadNoValidSymbolsError)
         {
-            Log.LogError("Invalid stock symbol error from stocks API.  Verify the stock symbols in the input file.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Invalid stock symbol error from stocks API.  Verify the stock symbols in the input file."));
+            logger.LogError("Invalid stock symbol error from stocks API.  Verify the stock symbols in the input file.");
+            progress.Report(new ProgressLog(MessageImportance.Bad, "Invalid stock symbol error from stocks API.  Verify the stock symbols in the input file."));
         }
         if (hadRateLimitError)
         {
-            Log.LogError("Rate limit exceeded error from stocks API.  Try increasing the ApiDelayPerCallMilliseconds setting.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Rate limit exceeded error from stocks API.  Try increasing the ApiDelayPerCallMilliseconds setting."));
+            logger.LogError("Rate limit exceeded error from stocks API.  Try increasing the ApiDelayPerCallMilliseconds setting.");
+            progress.Report(new ProgressLog(MessageImportance.Bad, "Rate limit exceeded error from stocks API.  Try increasing the ApiDelayPerCallMilliseconds setting."));
         }
         if (hadMonthlyRequestsLimitError)
         {
-            Log.LogError("Monthly API calls limit reached error from stocks API.  Plans with a higher limit may be available.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Monthly API calls limit reached error from stocks API.  Plans with a higher limit may be available."));
+            logger.LogError("Monthly API calls limit reached error from stocks API.  Plans with a higher limit may be available.");
+            progress.Report(new ProgressLog(MessageImportance.Bad, "Monthly API calls limit reached error from stocks API.  Plans with a higher limit may be available."));
         }
         if (hadOtherError)
         {
-            Log.LogError("Unknown error from stocks API.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Unknown error from stocks API."));
+            logger.LogError("Unknown error from stocks API.");
+            progress.Report(new ProgressLog(MessageImportance.Bad, "Unknown error from stocks API."));
         }
 
         return GetFlattenedStocks(stocks, endpointReturnsAdjustedClose);
@@ -112,9 +105,10 @@ public class Marketstack(ILogger<Marketstack> log, IProgress<ProgressLog> progre
         var flattenedStocks = new List<FlattenedStock>();
 
         if (stocks is not null)
-        {
-            flattenedStocks.AddRange(stocks.Where(s => s.Data is not null).SelectMany(stock => stock.Data!).Select(data => new FlattenedStock(DateTime.Parse(data.Date), data.Symbol, closeValueIsAdjusted ? data.AdjustedClose : data.Close)));
-        }
+            flattenedStocks.AddRange(
+                stocks.Where(s => s.Data is not null)
+                .SelectMany(stock => stock.Data!)
+                .Select(data => new FlattenedStock(DateTime.Parse(data.Date), data.Symbol, closeValueIsAdjusted ? data.AdjustedClose : data.Close)));
 
         return flattenedStocks;
     }

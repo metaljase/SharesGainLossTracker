@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -8,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using Microsoft.Extensions.Logging;
 
 using Metalhead.SharesGainLossTracker.Core.Models;
 using Metalhead.SharesGainLossTracker.Core.Services;
@@ -20,18 +20,22 @@ namespace Metalhead.SharesGainLossTracker.WpfApp;
 public partial class MainWindow : Window
 {
     private ILogger<MainWindow> Log { get; }
-    private SharesOptions SharesSettings { get; }
+    private SharesOptions SharesOptions { get; }
     private IProgress<ProgressLog> Progress { get; }
     private IExcelWorkbookCreatorService ExcelWorkbookCreatorService { get; }
     private bool AutoScroll { get; set; } = true;
     private bool CreatedExcelFile { get; set; }
 
-    public MainWindow(ILogger<MainWindow> log, SharesOptions sharesOptions, IProgress<ProgressLog> progress, IExcelWorkbookCreatorService excelWorkbookCreatorService)
+    public MainWindow(
+        ILogger<MainWindow> logger,
+        SharesOptions sharesOptions,
+        IProgress<ProgressLog> progress,
+        IExcelWorkbookCreatorService excelWorkbookCreatorService)
     {
-        Log = log;
+        Log = logger;
         Progress = (Progress<ProgressLog>)progress;
         ExcelWorkbookCreatorService = excelWorkbookCreatorService;
-        SharesSettings = sharesOptions;
+        SharesOptions = sharesOptions;
 
         InitializeComponent();
         ((Progress<ProgressLog>)Progress).ProgressChanged += ProgressLog;
@@ -67,15 +71,13 @@ public partial class MainWindow : Window
             List<string> outputFilePathOpened = [];
             
             // Get stocks data for all groups and create an Excel Workbook for each.
-            foreach (var shareGroup in SharesSettings.Groups.Where(g => g.Enabled))
+            foreach (var shareGroup in SharesOptions.Groups.Where(g => g.Enabled))
             {
                 var symbolsFullPath = Environment.ExpandEnvironmentVariables(shareGroup.SymbolsFullPath);
                 var outputFilePath = Environment.ExpandEnvironmentVariables(shareGroup.OutputFilePath);
 
-                if (SharesSettings.SuffixDateToOutputFilePath == true)
-                {
+                if (SharesOptions.SuffixDateToOutputFilePath == true)
                     outputFilePath = $"{outputFilePath}{DateTime.Now.Date:yyyy-MM-dd}";
-                }
 
                 excelFileFullPath = await ExcelWorkbookCreatorService.CreateWorkbookAsync(
                     shareGroup.Model,
@@ -86,9 +88,9 @@ public partial class MainWindow : Window
                     shareGroup.OrderByDateDescending,
                     outputFilePath,
                     shareGroup.OutputFilenamePrefix,
-                    SharesSettings.AppendPurchasePriceToStockNameColumn == true);
+                    SharesOptions.AppendPurchasePriceToStockNameColumn == true);
 
-                if (excelFileFullPath is not null && SharesSettings.OpenOutputFileDirectory == true)
+                if (excelFileFullPath is not null && SharesOptions.OpenOutputFileDirectory == true)
                 {
                     if (Directory.Exists(outputFilePath))
                     {
@@ -100,9 +102,7 @@ public partial class MainWindow : Window
                         }
                     }
                     else
-                    {
                         Log.LogError("Folder does not exist: {OutputFilePath}", outputFilePath);
-                    }
                 }
             }
 
