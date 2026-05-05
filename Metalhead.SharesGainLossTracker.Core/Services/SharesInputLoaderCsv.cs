@@ -1,59 +1,51 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
-using Metalhead.SharesGainLossTracker.Core.Models;
 using Metalhead.SharesGainLossTracker.Core.FileSystem;
+using Metalhead.SharesGainLossTracker.Core.Models;
 
 namespace Metalhead.SharesGainLossTracker.Core.Services;
 
-public class SharesInputLoaderCsv : ISharesInputLoader
+public class SharesInputLoaderCsv(
+    ILogger<SharesInputLoaderCsv> logger,
+    IProgress<ProgressLog> progress,
+    IFileSystemFileWrapper fileSystemFileWrapper)
+    : ISharesInputLoader
 {
-    private ILogger<SharesInputLoaderCsv> Log { get; }
-    private IProgress<ProgressLog> Progress { get; }
-    private IFileSystemFileWrapper FileSystemFileWrapper { get; }
-
-    public SharesInputLoaderCsv(ILogger<SharesInputLoaderCsv> log, IProgress<ProgressLog> progress, IFileSystemFileWrapper fileSystemFileWrapper)
-    {
-        Log = log;
-        Progress = progress;
-        FileSystemFileWrapper = fileSystemFileWrapper;
-    }
-
-    public List<Share> CreateSharesInput(string sharesInputFileFullPath)
-    {
-        return CreateSharesInputFromCsvFile(sharesInputFileFullPath);
-    }
+    public List<Share> CreateSharesInput(string sharesInputFileFullPath) => CreateSharesInputFromCsvFile(sharesInputFileFullPath);
 
     public List<Share> CreateSharesInputFromCsvFile(string sharesInputFileFullPath)
     {
         if (sharesInputFileFullPath is null)
         {
-            Log.LogError("Shares input file full path cannot be null.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Shares input file full path cannot be null.", false));
+            logger.LogError("Shares input file full path cannot be null.");
+            progress.Report(new ProgressLog(MessageImportance.Bad, "Shares input file full path cannot be null.", false));
             throw new ArgumentNullException(nameof(sharesInputFileFullPath), "Shares input file full path cannot be null.");
         }
 
-        if (!string.IsNullOrWhiteSpace(sharesInputFileFullPath) && !FileSystemFileWrapper.Exists(sharesInputFileFullPath))
+        if (!string.IsNullOrWhiteSpace(sharesInputFileFullPath) && !fileSystemFileWrapper.Exists(sharesInputFileFullPath))
         {
-            Log.LogError("Shares input file not found: {SharesInputFileFullPath}", sharesInputFileFullPath);
-            Progress.Report(new ProgressLog(MessageImportance.Bad, $"Shares input file not found: {sharesInputFileFullPath}", false));
+            logger.LogError("Shares input file not found: {SharesInputFileFullPath}", sharesInputFileFullPath);
+            progress.Report(new ProgressLog(MessageImportance.Bad, $"Shares input file not found: {sharesInputFileFullPath}", false));
             throw new FileNotFoundException($"Shares input file not found.", sharesInputFileFullPath);
         }
 
-        IEnumerable<string> delimitedSharesInput = new List<string>();
-        if (!string.IsNullOrWhiteSpace(sharesInputFileFullPath) && FileSystemFileWrapper.Exists(sharesInputFileFullPath))
+        IEnumerable<string> delimitedSharesInput = [];
+        if (!string.IsNullOrWhiteSpace(sharesInputFileFullPath) && fileSystemFileWrapper.Exists(sharesInputFileFullPath))
         {
-            var allLines = FileSystemFileWrapper.ReadAllLines(sharesInputFileFullPath);
+            var allLines = fileSystemFileWrapper.ReadAllLines(sharesInputFileFullPath);
             delimitedSharesInput = allLines.Where(x => !string.IsNullOrEmpty(x) && x.Contains(','));
 
             if (allLines.Length == 0 || allLines.Length != delimitedSharesInput.Count())
             {
-                Log.LogError("Not all lines in the shares input file are formatted correctly: {SharesInputFileFullPath}", sharesInputFileFullPath);
-                Progress.Report(new ProgressLog(MessageImportance.Bad, $"Not all lines in the shares input file are formatted correctly: {sharesInputFileFullPath}", false));
-                throw new InvalidOperationException($"Not all lines in the shares input file are formatted correctly: {sharesInputFileFullPath}");
+                logger.LogError(
+                    "Not all lines in the shares input file are formatted correctly: {SharesInputFileFullPath}", sharesInputFileFullPath);
+                progress.Report(new ProgressLog(MessageImportance.Bad, $"Not all lines in the shares input file are formatted correctly: {sharesInputFileFullPath}", false));
+                throw new InvalidOperationException(
+                    $"Not all lines in the shares input file are formatted correctly: {sharesInputFileFullPath}");
             }
         }
 
@@ -69,9 +61,10 @@ public class SharesInputLoaderCsv : ISharesInputLoader
 
             if (elements.Length != 3 || elements.Any(e => e.Length == 0))
             {
-                Log.LogError("Line in shares input CSV does not contain a stock symbol, stock name, and purchase price: {DelimitedLine}", delimitedLine);
-                Progress.Report(new ProgressLog(MessageImportance.Bad, $"Line in shares input CSV does not contain a stock symbol, stock name, and purchase price: {delimitedLine}", false));
-                throw new InvalidOperationException($"Line in shares input CSV does not contain a stock symbol, stock name, and purchase price: {delimitedLine}");
+                logger.LogError("Line in shares input CSV does not contain a stock symbol, stock name, and purchase price: {DelimitedLine}", delimitedLine);
+                progress.Report(new ProgressLog(MessageImportance.Bad, $"Line in shares input CSV does not contain a stock symbol, stock name, and purchase price: {delimitedLine}", false));
+                throw new InvalidOperationException(
+                    $"Line in shares input CSV does not contain a stock symbol, stock name, and purchase price: {delimitedLine}");
             }
 
             try
@@ -80,17 +73,18 @@ public class SharesInputLoaderCsv : ISharesInputLoader
             }
             catch (FormatException ex)
             {
-                var exception = new InvalidOperationException($"Shares input CSV contains incorrectly formatted value(s): {delimitedLine}", ex);
-                Log.LogError(exception, "Shares input CSV contains incorrectly formatted value(s): {DelimitedLine}", delimitedLine);
-                Progress.Report(new ProgressLog(MessageImportance.Bad, $"Shares input CSV contains incorrectly formatted value(s): {delimitedLine}", false));
+                var exception = new InvalidOperationException(
+                    $"Shares input CSV contains incorrectly formatted value(s): {delimitedLine}", ex);
+                logger.LogError(exception, "Shares input CSV contains incorrectly formatted value(s): {DelimitedLine}", delimitedLine);
+                progress.Report(new ProgressLog(MessageImportance.Bad, $"Shares input CSV contains incorrectly formatted value(s): {delimitedLine}", false));
                 throw exception;
             }
         }
 
-        if (!sharesInput.Any())
+        if (sharesInput.Count == 0)
         {
-            Log.LogError("Shares input CSV does not contain any lines with correctly formatted values.");
-            Progress.Report(new ProgressLog(MessageImportance.Bad, "Shares input CSV does not contain any lines with correctly formatted values.", false));
+            logger.LogError("Shares input CSV does not contain any lines with correctly formatted values.");
+            progress.Report(new ProgressLog(MessageImportance.Bad, "Shares input CSV does not contain any lines with correctly formatted values.", false));
             throw new InvalidOperationException("Shares input CSV does not contain any lines with correctly formatted values.");
         }
 

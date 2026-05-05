@@ -7,16 +7,9 @@ public enum MessageImportance
     Normal
 };
 
-public class ProgressLog
+public class ProgressLog(MessageImportance importance, string message, bool createdExcelFile = false)
 {
-    public ProgressLog(MessageImportance importance, string message, bool createdExcelFile = false)
-    {
-        Importance = importance;
-        DownloadLog = message;
-        CreatedExcelFile = createdExcelFile;
-    }
-
-    public MessageImportance Importance { get; set; }
-    public string DownloadLog { get; set; }
-    public bool CreatedExcelFile { get; set; }
+    public MessageImportance Importance { get; set; } = importance;
+    public string DownloadLog { get; set; } = message;
+    public bool CreatedExcelFile { get; set; } = createdExcelFile;
 }
