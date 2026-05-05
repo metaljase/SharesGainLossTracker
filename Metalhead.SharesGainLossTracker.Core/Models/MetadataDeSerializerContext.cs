@@ -1,4 +1,6 @@
 ﻿using System.Text.Json.Serialization;
+using Metalhead.SharesGainLossTracker.Core.Models.AlphaVantage;
+using Metalhead.SharesGainLossTracker.Core.Models.Marketstack;
 
 namespace Metalhead.SharesGainLossTracker.Core.Models;
 

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Metalhead.SharesGainLossTracker.Core.Models;
+namespace Metalhead.SharesGainLossTracker.Core.Models.Marketstack;
 
 public class MarketstackRoot
 {

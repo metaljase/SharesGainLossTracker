@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Metalhead.SharesGainLossTracker.Core.Models;
+namespace Metalhead.SharesGainLossTracker.Core.Models.AlphaVantage;
 
 public class AlphaVantageRoot
 {

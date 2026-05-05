@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
 using Metalhead.SharesGainLossTracker.Core.Models;
+using Metalhead.SharesGainLossTracker.Core.Models.Marketstack;
 
 namespace Metalhead.SharesGainLossTracker.Core;
 
